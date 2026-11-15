@@ -1,9 +1,14 @@
 {
-    "ItemName_ISA.ISAMag1": "New Advancements: Energy From The Sun",
-    "ItemName_ISA.SolarPanel": "Solar Panel (part)",
-    "ItemName_ISA.ISAInverter": "Inverter",
-    "ItemName_ISA.DeepCycleBattery": "200Ah Deep Cycle Battery",
-    "ItemName_ISA.SuperBattery": "400Ah Deep Cycle Battery",
-    "ItemName_ISA.WiredCarBattery": "Wired Car Battery",
-    "ItemName_ISA.DIYBattery": "DIY Deep Cycle Battery"
+    "ISA.ISAMag1": "Novos Avanços: Energia do Sol",
+    "ISA.SolarPanel": "Painel Solar (peça)",
+    "ISA.ISAInverter": "Inversor",
+    "ISA.DeepCycleBattery": "Bateria de Ciclo Profundo de 200 Ah",
+    "ISA.SuperBattery": "Bateria de Ciclo Profundo de 400 Ah",
+    "ISA.WiredCarBattery": "Bateria de Carro com Fiação",
+    "ISA.DIYBattery": "Bateria de Ciclo Profundo Artesanal",
+    "ISA.PowerBank_test": "Banco de Baterias",
+    "ISA.PowerBank": "Banco de Baterias",
+    "ISA.Stash_RiversideW1": "Mapa",
+    "ISA.Stash_RosewoodE1": "Mapa",
+    "ISA.Stash_Louisville1": "Mapa"
 }

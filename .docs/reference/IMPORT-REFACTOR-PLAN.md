@@ -1,5 +1,7 @@
 # Refactor requirements
 
+> Historical import-era plan, retained for provenance. Paths referring to `42.1/` describe the original import; the current fork uses `42/`. Current dependency-removal and hotspot recommendations are in [R-001](../reports/R-001-dependency-removal-and-hotspot-refactor.md), indexed in [INDEX.md](../INDEX.md).
+
 ## Baseline
 
 Imported on 2026-11-15 from:

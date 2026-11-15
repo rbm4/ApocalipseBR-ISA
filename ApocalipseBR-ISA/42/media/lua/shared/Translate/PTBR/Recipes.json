@@ -1,11 +1,16 @@
 {
-    "MakeDIYBattery": "Faça bateria DIY",
-    "WireCarBattery": "Bateria do carro de arame",
-    "UnwireCarBattery": "Bateria inútil",
+    "MakeDIYBattery": "Fazer Bateria Artesanal",
+    "WireCarBattery": "Instalar Fiação na Bateria de Carro",
+    "UnWireCarBattery": "Remover Fiação da Bateria de Carro",
     "MakeSolarRoofTile": "Fazer Painel Solar de Teto",
     "ReverseSolarPanel": "Dividir o painel solar em partes",
     "CreateBatteryBank": "Criar Banco de Baterias",
     "CreateSolarFailsafe": "Criar Mecanismo de Segurança",
     "MakeSolarPanel": "Faça o painel solar (parte)",
-    "MakeInverter": "Faça inversor"
+    "MakeInverter": "Faça inversor",
+    "SolarPanelFlat": "Construir Painel Solar de Teto",
+    "SolarPanelMounted": "Construir Painel Solar de Chão",
+    "SolarPanelWall": "Construir Painel Solar de Parede",
+    "PowerBank": "Construir Banco de Baterias",
+    "SolarFailsafe": "Construir Mecanismo de Segurança Solar"
 }

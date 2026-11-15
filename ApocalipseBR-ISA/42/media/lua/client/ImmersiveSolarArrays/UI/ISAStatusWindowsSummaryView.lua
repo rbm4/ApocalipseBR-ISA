@@ -96,7 +96,7 @@ function ISAWindowsSumaryTab:render()
 			badgeText = getText("IGUI_ISAWindowsSumaryTab_FullyCharged")
 			bR, bG, bB = 0.15, 0.75, 0.35
 		else
-			badgeText = string.format(getText("IGUI_ISASummary_ChargingFmt"), math.floor(self.difference))
+			badgeText = getText("IGUI_ISASummary_ChargingFmt", math.floor(self.difference))
 			bR, bG, bB = 0.15, 0.85, 0.35
 		end
 	elseif self.difference < 0 then
@@ -104,7 +104,7 @@ function ISAWindowsSumaryTab:render()
 			badgeText = getText("IGUI_ISAWindowsSumaryTab_FullyDischarged")
 			bR, bG, bB = 0.95, 0.25, 0.25
 		else
-			badgeText = string.format(getText("IGUI_ISASummary_DischargingFmt"), math.floor(math.abs(self.difference)))
+			badgeText = getText("IGUI_ISASummary_DischargingFmt", math.floor(math.abs(self.difference)))
 			bR, bG, bB = 0.95, 0.65, 0.15
 		end
 	else
@@ -136,16 +136,16 @@ function ISAWindowsSumaryTab:render()
 	local statY1 = c1Y + 68
 	local statY2 = c1Y + 95
 
-	self:drawText(string.format(getText("IGUI_ISASummary_TotalCapacityFmt"), math.floor(self.maxCapacity), pb.batteries), leftColX, statY1, 0.8, 0.85, 0.9, 1, UIFont.Small)
-	self:drawText(string.format(getText("IGUI_ISASummary_CurrentStoredFmt"), math.floor(self.charge)), rightColX, statY1, 0.8, 0.85, 0.9, 1, UIFont.Small)
+	self:drawText(getText("IGUI_ISASummary_TotalCapacityFmt", math.floor(self.maxCapacity), pb.batteries), leftColX, statY1, 0.8, 0.85, 0.9, 1, UIFont.Small)
+	self:drawText(getText("IGUI_ISASummary_CurrentStoredFmt", math.floor(self.charge)), rightColX, statY1, 0.8, 0.85, 0.9, 1, UIFont.Small)
 
 	local netText = getText("IGUI_ISASummary_NetBalanced")
 	local netR, netG, netB = 0.7, 0.7, 0.7
 	if self.difference > 0 then
-		netText = string.format(getText("IGUI_ISASummary_NetChargingFmt"), math.floor(self.difference))
+		netText = getText("IGUI_ISASummary_NetChargingFmt", math.floor(self.difference))
 		netR, netG, netB = 0.2, 0.85, 0.35
 	elseif self.difference < 0 then
-		netText = string.format(getText("IGUI_ISASummary_NetDischargingFmt"), math.floor(math.abs(self.difference)))
+		netText = getText("IGUI_ISASummary_NetDischargingFmt", math.floor(math.abs(self.difference)))
 		netR, netG, netB = 0.95, 0.65, 0.15
 	end
 	self:drawText(getText("IGUI_ISASummary_NetPowerBalance") .. "  " .. netText, leftColX, statY2, netR, netG, netB, 1, UIFont.Small)
@@ -160,12 +160,12 @@ function ISAWindowsSumaryTab:render()
 		local ctime = (self.maxCapacity - self.charge) / self.difference
 		local h = math.floor(ctime)
 		local m = math.floor((ctime - h) * 60)
-		timeEstStr = string.format(getText("IGUI_ISASummary_TimeToFullFmt"), h, m)
+		timeEstStr = getText("IGUI_ISASummary_TimeToFullFmt", h, m)
 	elseif self.difference < 0 and self.charge > 0 then
 		local dtime = math.abs(self.charge / self.difference)
 		local h = math.floor(dtime)
 		local m = math.floor((dtime - h) * 60)
-		timeEstStr = string.format(getText("IGUI_ISASummary_TimeToEmptyFmt"), h, m)
+		timeEstStr = getText("IGUI_ISASummary_TimeToEmptyFmt", h, m)
 		timeR, timeG, timeB = 0.95, 0.35, 0.35
 	elseif self.charge == 0 then
 		timeEstStr = getText("IGUI_ISASummary_CompletelyDischarged")
@@ -183,24 +183,24 @@ function ISAWindowsSumaryTab:render()
 
 	-- Efficiency Badge on right
 	local effPct = self.panelsMaxInput > 0 and math.floor((self.panelsInput / self.panelsMaxInput) * 100) or 0
-	self:drawStatusBadge(c2X + cardW - 10, c2Y + 5, string.format(getText("IGUI_ISASummary_EfficiencyFmt"), effPct), 0.15, 0.75, 0.85)
+	self:drawStatusBadge(c2X + cardW - 10, c2Y + 5, getText("IGUI_ISASummary_EfficiencyFmt", effPct), 0.15, 0.75, 0.85)
 
 	local c2Y1 = c2Y + 38
 	local c2Y2 = c2Y + 63
 	local c2Y3 = c2Y + 88
 
-	self:drawText(string.format(getText("IGUI_ISASummary_CurrentSolarFmt"), math.floor(self.panelsInput)), leftColX, c2Y1, 0.2, 0.85, 0.35, 1, UIFont.Small)
-	self:drawText(string.format(getText("IGUI_ISASummary_ConnectedPanelsFmt"), pb.npanels), rightColX, c2Y1, 0.8, 0.85, 0.9, 1, UIFont.Small)
+	self:drawText(getText("IGUI_ISASummary_CurrentSolarFmt", math.floor(self.panelsInput)), leftColX, c2Y1, 0.2, 0.85, 0.35, 1, UIFont.Small)
+	self:drawText(getText("IGUI_ISASummary_ConnectedPanelsFmt", pb.npanels), rightColX, c2Y1, 0.8, 0.85, 0.9, 1, UIFont.Small)
 
-	self:drawText(string.format(getText("IGUI_ISASummary_MaxSolarFmt"), math.floor(self.panelsMaxInput)), leftColX, c2Y2, 0.8, 0.85, 0.9, 1, UIFont.Small)
-	self:drawText(string.format(getText("IGUI_ISASummary_BaseDrainFmt"), math.floor(pb.drain)), rightColX, c2Y2, 0.95, 0.45, 0.35, 1, UIFont.Small)
+	self:drawText(getText("IGUI_ISASummary_MaxSolarFmt", math.floor(self.panelsMaxInput)), leftColX, c2Y2, 0.8, 0.85, 0.9, 1, UIFont.Small)
+	self:drawText(getText("IGUI_ISASummary_BaseDrainFmt", math.floor(pb.drain)), rightColX, c2Y2, 0.95, 0.45, 0.35, 1, UIFont.Small)
 
 	-- Weather & Sun / Moon icon
 	local sunIcon = self.night and self.textureMoon or self.textureSun
 	if sunIcon then
 		self:drawTextureScaled(sunIcon, leftColX, c2Y3 - 2, 18, 18, 1, 1, 1, 1)
 	end
-	local weatherText = self.night and getText("IGUI_ISASummary_NightNoSun") or (effPct > 70 and string.format(getText("IGUI_ISASummary_ClearSkyFmt"), effPct) or (effPct > 30 and string.format(getText("IGUI_ISASummary_CloudyFmt"), effPct) or getText("IGUI_ISASummary_HeavyClouds")))
+	local weatherText = self.night and getText("IGUI_ISASummary_NightNoSun") or (effPct > 70 and getText("IGUI_ISASummary_ClearSkyFmt", effPct) or (effPct > 30 and getText("IGUI_ISASummary_CloudyFmt", effPct) or getText("IGUI_ISASummary_HeavyClouds")))
 	self:drawText(getText("IGUI_ISASummary_Environment") .. "  " .. weatherText, leftColX + 24, c2Y3, 0.85, 0.9, 0.95, 1, UIFont.Small)
 
 	local statusText = getText("IGUI_ISASummary_WorkingOK")

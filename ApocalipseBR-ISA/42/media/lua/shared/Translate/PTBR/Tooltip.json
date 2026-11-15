@@ -1,4 +1,5 @@
 {
     "Tooltip_ISA_NoPanels": "Nenhum painel",
-    "Tooltip_ISA_PanelFar": "Este painel está muito longe"
+    "Tooltip_ISA_PanelFar": "Este painel está muito longe",
+    "Tooltip_PowerBank": "Armazena a energia dos painéis solares em baterias e alimenta os dispositivos elétricos próximos."
 }

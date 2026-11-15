@@ -5,7 +5,7 @@ module Base
         entity ES_PowerBank
         {
             LuaWindowClass = ISEntityWindow,
-            DisplayName    = Power Bank,
+            DisplayName    = IGUI_ISA_Entity_PowerBank,
             Icon           = Item_CarBattery,
         }
     }

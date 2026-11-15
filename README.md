@@ -8,7 +8,7 @@ Development fork initialized from the installed Immersive Solar Arrays B42 `25.0
 
 ```text
 ApocalipseBR-ISA/
-  42.1/
+  42/
     mod.info
     poster.png
     media/
@@ -24,13 +24,20 @@ ApocalipseBR-ISA/
     media/             # shared models, textures, UI, tile definitions and texture pack
     poster.png
     icon.png
-docs/
+.docs/
+  INDEX.md
+  issues/
+  features/
+  reports/
+  reference/
+AGENT.md
+AGENTS.md
 workshop/
 project.json
 package.json
 ```
 
-`42.1` is the upstream folder name, not the minimum supported game version. `mod.info` retains `versionMin=42.13`. The old B41 root `media` tree and separate uninstaller were not imported. The empty scaffold sandbox-options file was removed; the complete B42 options are in `42.1/media`.
+The current version folder is `42/` (the original imported folder was `42.1/`). `mod.info` retains `versionMin=42.13`. The old B41 root `media` tree and separate uninstaller were not imported. The empty scaffold sandbox-options file was removed; the complete B42 options are in `42/media`.
 
 Internal `ISA` item/script namespaces, Lua paths, sandbox keys, command modules, global-object system `isa_powerbank`, texture pack name and tile definition ID **575** are preserved. Renaming these would require deliberate migrations and asset/script changes. Enable this fork instead of another ISA fork: they share those identifiers and are not designed to coexist. Existing-save migration has not been validated.
 
@@ -46,7 +53,7 @@ npm run clean
 
 `build` already replaces its own output, so a preceding `clean` is redundant and can fail on a first build. Output is written to the PZ Studio Workshop output directory under the project title. `watch` performs an initial build before watching. Restart the watcher or rebuild after metadata changes. `npm run update` retains PZ Studio's existing library-update command; it is not a Workshop upload command.
 
-PZ Studio generates a root `mod.info` from `project.json`, but its installed generator omits author, modversion, pack and tiledef. The authoritative **B42 versioned** `42.1/mod.info` is copied unchanged and contains those required fields. Maintain identity/dependency fields consistently in both files. This project is tagged B42, defaults to unlisted, and has no Workshop item ID assigned. Building does not publish it.
+PZ Studio generates a root `mod.info` from `project.json`, but its installed generator omits author, modversion, pack and tiledef. The **B42 versioned** `42/mod.info` contains those required fields, as does `common/mod.info`. Maintain relevant identity/dependency fields consistently in those files and `project.json`. This project is tagged B42, is configured as unlisted, and has Workshop item ID `3840506752`. Building does not publish it.
 
 Install/enable **TargetSquareOnLoad**, Workshop **2969455858**, alongside the fork. It remains an external dependency; its code was not vendored. Runtime validation needs a B42 multiplayer test server and client with this dependency.
 
@@ -54,6 +61,6 @@ Install/enable **TargetSquareOnLoad**, Workshop **2969455858**, alongside the fo
 
 Upstream credits from the imported mod: **RadX5, Poltergeist, ericogamo**. Workshop source: `3670551703`; upstream project URL recorded in that source: `https://github.com/radx5Blue/ImmersiveSolarArrays`. These identify provenance, not a claim that this exact fork matches the current upstream repository. No new license grant is inferred from attribution.
 
-See [the refactor plan](docs/REFACTOR-PLAN.md) for toxicity, scheduling, inventory authority, Java fallback boundaries, and validation requirements. No performance fixes or Java patches are part of the initial import.
+Start at [the documentation index](.docs/INDEX.md) for issues, features and reports. [R-001](.docs/reports/R-001-dependency-removal-and-hotspot-refactor.md) covers TargetSquareOnLoad removal, save migration, toxicity, scheduling, inventory authority and Java fallback boundaries. The [import-era plan](.docs/reference/IMPORT-REFACTOR-PLAN.md) is retained as historical reference. Contributor/agent instructions are in [AGENT.md](AGENT.md), discovered through [AGENTS.md](AGENTS.md). These documents propose refactors; they do not implement them.
 
 Initial validation: `npm run build` passed; all 495 imported files other than the intentionally edited `mod.info` matched upstream SHA256 hashes, including all 34 Lua sources. All 496 non-placeholder mod files matched the generated build. JSON parsing and `git diff --check` passed. No in-game or multiplayer validation has been performed.

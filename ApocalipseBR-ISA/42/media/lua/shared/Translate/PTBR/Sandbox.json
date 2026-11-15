@@ -5,7 +5,7 @@
     "Sandbox_ISA_batteryDegradeChance": "Probabilidade de Deterioração da Bateria (0-100)",
     "Sandbox_ISA_batteryDegradeChance_tooltip": "Probabilidade das baterias se deteriorarem a cada dia. Diminuir isto aumentará drasticamente a vida útil da bateria",
     "Sandbox_ISA_solarPanelWorldSpawns": "Aparecimento de Painel Solar / Caixa no mundo (0-100)",
-    "Sandbox_ISA_solarPanelWorldSpawns_tooltip": "Qu?o prov?vel pain?is solares e caixas aparecer?o nos lugares onde isto pode acontecer.<br> Requer que a API externa funcione",
+    "Sandbox_ISA_solarPanelWorldSpawns_tooltip": "Quão provável é que painéis solares e caixas apareçam nos locais permitidos.<br> Requer que a API externa funcione",
     "Sandbox_ISA_LRMSolarPanels": "Multiplicador de Raridade de Loot - Painéis Solares",
     "Sandbox_ISA_LRMSolarPanels_tooltip": "Multiplicador de probabilidade do aparecimento de Paineis Solares em containêrs aleatórios e caixas pré-configuradas",
     "Sandbox_ISA_LRMBatteries": "Multiplicador de Raridade de Loot - Baterias",
@@ -22,7 +22,7 @@
     "Sandbox_ISA_ChargeFreq_option2": "A cada hora",
     "Sandbox_ISA_ChargeFreq": "Periodicidade de Carregamento",
     "Sandbox_ISA_ChargeFreq_tooltip": "Quão frequentemente o Banco de Baterias carregará",
-    "Sandbox_ISA_BatteryBankSpawn": "Battery Bank Spawn",
+    "Sandbox_ISA_BatteryBankSpawn": "Aparecimento de Bancos de Baterias",
     "Sandbox_ISA_BatteryBankSpawn_tooltip": "Raridade do Banco de Baterias aparecendo no mapa.",
     "Sandbox_ISA_BatteryBankSpawn_option1": "Nenhum",
     "Sandbox_ISA_BatteryBankSpawn_option2": "Muito Raro",
@@ -38,6 +38,6 @@
     "Sandbox_ISA_ConnectPanelMin_tooltip": "Número base de minutos no jogo leva para conectar um painel",
     "Sandbox_ISA_enableExpandedRecipes": "Receitas expandidas",
     "Sandbox_ISA_enableExpandedRecipes_tooltip": "Permite criar painéis e inversores solares",
-    "Sandbox_ISA_BackupGeneratorRange": "Backup Generator Range",
-    "Sandbox_ISA_BackupGeneratorRange_tooltip": "Maximum tile distance for connecting a backup generator to a Battery Bank."
+    "Sandbox_ISA_BackupGeneratorRange": "Alcance do Gerador de Reserva",
+    "Sandbox_ISA_BackupGeneratorRange_tooltip": "Distância máxima em quadrados para conectar um gerador de reserva a um Banco de Baterias."
 }

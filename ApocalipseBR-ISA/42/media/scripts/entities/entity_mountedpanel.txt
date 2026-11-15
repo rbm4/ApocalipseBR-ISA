@@ -5,7 +5,7 @@ module Base
         entity ES_SolarPanelMounted
         {
             LuaWindowClass = ISEntityWindow,
-            DisplayName    = Mounted Solar Panel,
+            DisplayName    = IGUI_ISA_Entity_SolarPanelMounted,
             Icon           = Item_SolarPanel,
         }
     }

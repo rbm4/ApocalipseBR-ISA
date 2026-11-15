@@ -5,7 +5,7 @@ module Base
         entity ES_SolarFailsafe
         {
             LuaWindowClass = ISEntityWindow,
-            DisplayName    = Solar Fail Safe,
+            DisplayName    = IGUI_ISA_Entity_SolarFailsafe,
             Icon           = Item_CarBatteryCharger,
         }
     }
