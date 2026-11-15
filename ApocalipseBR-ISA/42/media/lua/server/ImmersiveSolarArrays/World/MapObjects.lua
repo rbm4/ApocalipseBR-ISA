@@ -21,7 +21,8 @@ else
     ---update isoObjects when chunk loads
     local function LoadPowerbank(isoObject)
         if not isoObject then return end
-        if not instanceof(isoObject, "IsoGenerator") then
+        if not instanceof(isoObject, "IsoGenerator") or
+            (ISA.nativePowerBanks and not instanceof(isoObject, "IsoPowerBank")) then
             isoObject = ISA.WorldUtil.replaceIsoObjectWithGenerator(isoObject)
             if not isoObject then return end
         end

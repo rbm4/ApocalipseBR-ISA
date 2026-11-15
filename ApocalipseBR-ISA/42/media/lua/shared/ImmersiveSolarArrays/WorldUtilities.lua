@@ -57,6 +57,12 @@ function WorldUtil.getValidBackupArea(level)
     return { radius = level, levels = level > 5 and 1 or 0, distance = math.pow(level, 2) * 1.25 }
 end
 
+function WorldUtil.isWithinPowerBankRange(character, square)
+    if not character or not square then return false end
+    return character:getZ() == square:getZ() and
+        IsoUtils.DistanceToSquared(character:getX(), character:getY(), square:getX() + 0.5, square:getY() + 0.5) <= 9
+end
+
 ---@param square IsoGridSquare
 ---@param radius number
 ---@param zLevels number
@@ -139,7 +145,8 @@ function WorldUtil.placePowerBank(square, spriteName, index, fullSpawn)
     local fullType = (props and props:has("CustomItem") and props:get("CustomItem"))
                      or ("Moveables." .. spriteName)
 
-    local generator = IsoGenerator.new(square:getCell())
+    local generatorClass = ISA.nativePowerBanks and IsoPowerBank or IsoGenerator
+    local generator = generatorClass.new(square:getCell())
     generator:setSprite(sprite)
     generator:setSquare(square)
 
@@ -175,14 +182,17 @@ function WorldUtil.replaceIsoObjectWithGenerator(isoObject)
     local square = isoObject:getSquare()
     if not square then return nil end
 
-    if instanceof(isoObject, "IsoGenerator") then
+    if instanceof(isoObject, "IsoGenerator") and
+        (not ISA.nativePowerBanks or instanceof(isoObject, "IsoPowerBank")) then
         return isoObject
     end
 
     local function findExistingGenerator(objects)
         for i = 0, objects:size() - 1 do
             local obj = objects:get(i)
-            if instanceof(obj, "IsoGenerator") and (WorldUtil.getType(obj) == "PowerBank" or WorldUtil.getSpriteName(obj) == "solarmod_tileset_01_0") then
+            if obj ~= isoObject and instanceof(obj, "IsoGenerator") and
+                (not ISA.nativePowerBanks or instanceof(obj, "IsoPowerBank")) and
+                (WorldUtil.getType(obj) == "PowerBank" or WorldUtil.getSpriteName(obj) == "solarmod_tileset_01_0") then
                 if isoObject ~= obj and isoObject:getSquare() == square then
                     square:transmitRemoveItemFromSquare(isoObject)
                     isoObject:removeFromWorld()
@@ -196,13 +206,14 @@ function WorldUtil.replaceIsoObjectWithGenerator(isoObject)
     local existing = findExistingGenerator(square:getSpecialObjects()) or findExistingGenerator(square:getObjects())
     if existing then return existing end
 
-    local item = instanceItem("ISA.PowerBank_test")
-    if not item then
-        print("[ISA] Failed to instance ISA.PowerBank_test, trying Base.Generator")
-        item = instanceItem("Base.Generator")
+    local gen
+    if ISA.nativePowerBanks then
+        gen = IsoPowerBank.new(square:getCell())
+        gen:getModData().ApocBRPowerBank = true
+    else
+        local item = instanceItem("ISA.PowerBank_test") or instanceItem("Base.Generator")
+        gen = IsoGenerator.new(item, square:getCell(), square)
     end
-
-    local gen = IsoGenerator.new(item, square:getCell(), square)
 
     -- Preserve visuals
     if isoObject:getSprite() then
@@ -215,10 +226,28 @@ function WorldUtil.replaceIsoObjectWithGenerator(isoObject)
     -- Identify as PowerBank
     gen:getModData().generatorFullType = "ISA.PowerBank_test"
 
+    if ISA.nativePowerBanks then
+        for key, value in pairs(isoObject:getModData()) do gen:getModData()[key] = value end
+        gen:getModData().ApocBRPowerBank = true
+        gen:getModData().generatorFullType = "ISA.PowerBank_test"
+        local container = isoObject:getContainer()
+        if container then
+            gen:setContainer(container)
+            container:setParent(gen)
+            container:setSourceGrid(square)
+        end
+    end
+
     if isoObject:getSquare() == square then
         square:transmitRemoveItemFromSquare(isoObject)
         isoObject:removeFromWorld()
         isoObject:removeFromSquare()
+    end
+
+    if ISA.nativePowerBanks then
+        square:AddSpecialObject(gen)
+        gen:createContainersFromSpriteProperties()
+        gen:transmitCompleteItemToClients()
     end
 
     return gen

@@ -8,6 +8,10 @@ BuildRecipeCode.ISA_PowerBank.OnCreate = function(data)
     local thumpable = data.thumpable
     if not thumpable then return end
 
+    if ISA.nativePowerBanks then
+        thumpable:getModData().ApocBRPowerBank = true
+    end
+
     local gen = ISA.WorldUtil.replaceIsoObjectWithGenerator(thumpable)
     if not gen then return end
 

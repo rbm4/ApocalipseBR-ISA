@@ -1,4 +1,6 @@
 {
+    "Sandbox_ISA_Debug": "Debug logging",
+    "Sandbox_ISA_Debug_tooltip": "Log bank registration, native simulation updates and production history to the console.",
     "Sandbox_ISA_BatteryBankSpawn": "Battery bank loot rarity",
     "Sandbox_ISA_BatteryBankSpawn_tooltip": "Relative loot weight for battery banks in generator/equipment containers and electrician vehicles. Does not replace normal generators.",
     "Sandbox_ISA_BatteryBankSpawn_option1": "None",

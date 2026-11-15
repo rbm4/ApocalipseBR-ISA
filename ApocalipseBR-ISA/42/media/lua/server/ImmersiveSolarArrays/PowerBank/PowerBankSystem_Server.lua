@@ -18,10 +18,12 @@ function PBSystem:new()
 end
 
 --called in SGlobalObjectSystem:new(name)
-PBSystem.savedObjectModData = { 'on', 'batteries', 'charge', 'maxcapacity', 'drain', 'npanels', 'panels', "lastHour", "conGenerator"}
+PBSystem.savedObjectModData = { 'on', 'batteries', 'charge', 'maxcapacity', 'drain', 'npanels', 'panels', "lastHour", "conGenerator", "ISA_simulationHour"}
 function PBSystem:initSystem()
     -- set the instance for easy access
     ISA.PBSystem_Server = self
+    ISA.debugLog("Bank system initialized mode=%s registeredBanks=%d",
+        ISA.nativePowerBanks and "native" or "legacy", self.system:getObjectCount())
 
     --SGlobalObjectSystem.initSystem(self) --does nothing
     --set saved fields
@@ -29,13 +31,17 @@ function PBSystem:initSystem()
 
     --sandbox options, *Events.Event.Add() doesn't need to be specifically inside a function call
     self.updateEveryTenMinutes = SandboxVars.ISA.ChargeFreq == 1 and true
-    if self.updateEveryTenMinutes then
-        Events.EveryTenMinutes.Add(PBSystem.updatePowerbanks)
-    else
-        Events.EveryHours.Add(PBSystem.updatePowerbanks)
+    if not ISA.nativePowerBanks then
+        if self.updateEveryTenMinutes then
+            Events.EveryTenMinutes.Add(PBSystem.updatePowerbanks)
+        else
+            Events.EveryHours.Add(PBSystem.updatePowerbanks)
+        end
     end
     Events.EveryDays.Add(PBSystem.EveryDays)
-    Events.OnTick.Add(PBSystem.preventToxicBuildings)
+    if not ISA.nativePowerBanks then
+        Events.OnTick.Add(PBSystem.preventToxicBuildings)
+    end
 end
 
 ---Create / Load a lua object from java object
@@ -46,15 +52,15 @@ end
 ---triggered by: Events.OnObjectAdded (SGlobalObjectSystem)
 ---@param isoObject IsoObject
 function PBSystem:OnObjectAdded(isoObject)
-    print("[ISA] OnObjectAdded:", isoObject, isoObject:getSprite() and isoObject:getSprite():getName())
-
     local isaType = ISA.WorldUtil.getType(isoObject)
-    print("[ISA] OnObjectAdded isaType:", isaType)
 
     if not isaType then
         return
     elseif isaType == "PowerBank" then
-        if not instanceof(isoObject, "IsoGenerator") then
+        ISA.debugLog("Bank added x=%s y=%s z=%s", tostring(isoObject:getX()),
+            tostring(isoObject:getY()), tostring(isoObject:getZ()))
+        if not instanceof(isoObject, "IsoGenerator") or
+            (ISA.nativePowerBanks and not instanceof(isoObject, "IsoPowerBank")) then
             isoObject = ISA.WorldUtil.replaceIsoObjectWithGenerator(isoObject)
         end
         if self:isValidIsoObject(isoObject) then
@@ -89,6 +95,47 @@ function PBSystem:OnClientCommand(command, playerObj, args)
     if fn ~= nil then
         fn(playerObj, args)
     end
+end
+
+function PBSystem:setBankEnabled(player, bank, enabled)
+    if not player or not bank or type(enabled) ~= "boolean" then return false end
+    local generator = bank:getIsoObject()
+    if not generator or not ISA.WorldUtil.isWithinPowerBankRange(player, generator:getSquare()) then
+        ISA.debugLog("Activation rejected x=%s y=%s z=%s reason=bank-unavailable-or-out-of-range",
+            tostring(bank.x), tostring(bank.y), tostring(bank.z))
+        return false
+    end
+
+    local level = player:getPerkLevel(Perks.Electricity)
+    ISA.debugLog("Activation requested x=%s y=%s z=%s enabled=%s skill=%d charge=%.3f capacity=%.3f",
+        tostring(bank.x), tostring(bank.y), tostring(bank.z), tostring(enabled), level, bank.charge, bank.maxcapacity)
+
+    if ISA.nativePowerBanks then
+        generator:requestSimulationUpdate()
+        generator:update()
+        local now = getGameTime():getWorldAgeHours()
+        if not bank.ISA_simulationHour or bank.ISA_simulationHour < now then
+            ISA.debugLog("Activation deferred x=%s y=%s z=%s reason=catch-up-in-progress",
+                tostring(bank.x), tostring(bank.y), tostring(bank.z))
+            return false
+        end
+    end
+
+    if enabled and not bank.on and level < 3 and ZombRand(6 - 2 * level) ~= 0 then
+        ISA.debugLog("Activation failed x=%s y=%s z=%s reason=electrical-skill-start-roll skill=%d",
+            tostring(bank.x), tostring(bank.y), tostring(bank.z), level)
+        return false
+    end
+
+    bank.on = enabled
+    bank.switchchanged = true
+    bank:updateDrain()
+    bank:updateGenerator()
+    bank:saveData(true)
+    ISA.debugLog("Activation applied x=%s y=%s z=%s enabled=%s activated=%s charge=%.3f",
+        tostring(bank.x), tostring(bank.y), tostring(bank.z), tostring(enabled),
+        tostring(generator:isActivated()), bank.charge)
+    return true
 end
 
 ---called when object is about to be removed
@@ -301,5 +348,9 @@ function PBSystem.preventToxicBuildings()
 end
 
 SGlobalObjectSystem.RegisterSystemClass(PBSystem)
+
+if ISA.nativePowerBanks then
+    require("ImmersiveSolarArrays/PowerBank/NativeSimulation").start()
+end
 
 return PBSystem

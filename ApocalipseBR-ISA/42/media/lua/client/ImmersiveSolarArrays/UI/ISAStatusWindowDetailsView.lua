@@ -47,10 +47,9 @@ function ISAWindowDetails:render()
 
     pb:updateFromIsoObject()
     local player = self.parent.parent.playerObj
-    local canSee = self.parent.parent.square:getCanSee(self.parent.parent.player)
     local area = isa.WorldUtil.getValidBackupArea(player:getPerkLevel(Perks.Electricity))
     local validArea = IsoUtils.DistanceToSquared(player:getX(),player:getY(),player:getZ(),pb.x+0.5,pb.y+0.5,pb.z) <= area.distance and math.abs(player:getZ()-pb.z) <= area.levels
-    if canSee and validArea or self.showDetails then
+    if isa.WorldUtil.isWithinPowerBankRange(player, pb:getSquare()) or self.showDetails then
         local isoObj = pb:getIsoObject()
         local devices = isoObj and isoObj.getItemsPowered and isoObj:getItemsPowered()
         local deviceCount = devices and devices:size() or 0

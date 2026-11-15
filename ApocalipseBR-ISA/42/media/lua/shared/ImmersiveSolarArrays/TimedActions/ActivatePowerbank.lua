@@ -21,7 +21,22 @@ function ISA_ActivatePowerBank:new(character, powerbank, activate, x, y, z)
 end
 
 function ISA_ActivatePowerBank:isValid()
-    return self.isoPb and self.isoPb:getObjectIndex() ~= -1 or false
+    local valid = self.isoPb and self.isoPb:getObjectIndex() ~= -1 or false
+    if not valid then
+        ISA.debugLog("Activation action invalid x=%s y=%s z=%s reason=object-removed",
+            tostring(self.x), tostring(self.y), tostring(self.z))
+    end
+    return valid
+end
+
+function ISA_ActivatePowerBank:start()
+    ISA.debugLog("Activation action started x=%s y=%s z=%s enabled=%s side=%s",
+        tostring(self.x), tostring(self.y), tostring(self.z), tostring(self.activate), isClient() and "client" or "server")
+end
+
+function ISA_ActivatePowerBank:stop()
+    ISA.debugLog("Activation action stopped x=%s y=%s z=%s", tostring(self.x), tostring(self.y), tostring(self.z))
+    ISBaseTimedAction.stop(self)
 end
 
 function ISA_ActivatePowerBank:getDuration()
@@ -33,29 +48,18 @@ end
 
 function ISA_ActivatePowerBank:complete()
     if isClient() then
-        sendClientCommand(self.character, "ISA", "activatePowerbank", {
+        ISA.PBSystem_Client:sendCommand(self.character, "activatePowerbank", {
             pb = { x = self.x, y = self.y, z = self.z },
             activate = self.activate
         })
         return true
     end
 
-    local pb = ISA.PBSystem_Server:getLuaObjectAt(self.x, self.y, self.z)
-    if not pb then return false end
-
-    if self.activate then
-        local level = self.character:getPerkLevel(Perks.Electricity)
-        if level < 3 and ZombRand(6-2*level) ~= 0 then
-            self.activate = false
-        end
-    end
-
-    pb.on = self.activate
-    pb.switchchanged = true
-    pb:updateDrain()
-    pb:updateGenerator()
-    pb:saveData(true)
-    return true
+    local system = ISA.PBSystem_Server
+    local pb = system and system:getLuaObjectAt(self.x, self.y, self.z)
+    ISA.debugLog("Activation action completed on server x=%s y=%s z=%s bankFound=%s",
+        tostring(self.x), tostring(self.y), tostring(self.z), tostring(pb ~= nil))
+    return system and system:setBankEnabled(self.character, pb, self.activate) or false
 end
 
 ISA.ActivatePowerbank = ISA_ActivatePowerBank

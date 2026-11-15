@@ -14,13 +14,15 @@ local sandbox = SandboxVars.ISA
 local PowerBank = SGlobalObject:derive("ISA_PowerBank_Server")
 
 function PowerBank:new(luaSystem, globalObject)
-    print("[ISA] Creating new PowerBankObject_Server")
-
-    return SGlobalObject.new(self, luaSystem, globalObject)
+    local bank = SGlobalObject.new(self, luaSystem, globalObject)
+    ISA.debugLog("Registered bank x=%s y=%s z=%s mode=%s savedHour=%s",
+        tostring(bank.x), tostring(bank.y), tostring(bank.z),
+        ISA.nativePowerBanks and "native" or "legacy", tostring(bank.ISA_simulationHour))
+    return bank
 end
 
 function PowerBank:initNew()
-    print("[ISA] Initializing new PowerBankObject_Server")
+    ISA.debugLog("Initializing bank x=%s y=%s z=%s", tostring(self.x), tostring(self.y), tostring(self.z))
 
     self.on = false
     self.batteries = 0
@@ -31,6 +33,7 @@ function PowerBank:initNew()
     self.drain = 0
     self.lastHour = 0
     self.conGenerator = false ---FIXME should be nil, nil didn't save / transmit data?
+    self.ISA_simulationHour = getGameTime():getWorldAgeHours()
 end
 
 ---called from loadIsoObject function when making new globalObject & luaObject. This is called for IsoObjects that did not have a Lua object when loaded.
@@ -103,6 +106,9 @@ end
 PowerBank.fuelToSolarRate = 800
 function PowerBank:getDrainVanilla(square)
     local gen = square:getGenerator()
+    if ISA.nativePowerBanks then
+        return gen:getTotalPowerUsing() * self.fuelToSolarRate
+    end
     if gen:isActivated() then
         gen:setSurroundingElectricity()
         return gen:getTotalPowerUsing() * self.fuelToSolarRate
@@ -312,6 +318,15 @@ end
 
 ---FIXME should not include next charge or duplicate current dCharge?
 function PowerBank:updateGenerator(dCharge)
+    if ISA.nativePowerBanks then
+        local generator = self:getIsoObject()
+        if generator then
+            local fraction = self.maxcapacity > 0 and self.charge / self.maxcapacity or 0
+            generator:applyPowerState(self.on and self.charge > 0, fraction)
+            generator:requestSimulationUpdate()
+        end
+        return
+    end
     if dCharge == nil then
         dCharge = self.luaSystem:getModifiedSolarOutput(self.npanels) - self.drain
         if sandbox.ChargeFreq == 1 then
@@ -348,6 +363,15 @@ end
 
 --if freezer timers, Powerbank generator condition / fuel are wrong check here
 function PowerBank:loadGenerator()
+    if ISA.nativePowerBanks then
+        local generator = self:getIsoObject()
+        if generator then
+            ISA.debugLog("Native bank bound x=%s y=%s z=%s subclass=%s; simulation update requested",
+                tostring(self.x), tostring(self.y), tostring(self.z), tostring(instanceof(generator, "IsoPowerBank")))
+            generator:requestSimulationUpdate()
+        end
+        return
+    end
     ---new load
     local generator = self:getIsoObject()
     if not generator then

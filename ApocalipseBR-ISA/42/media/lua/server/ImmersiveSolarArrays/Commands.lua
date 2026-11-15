@@ -39,7 +39,8 @@ Events.OnClientCommand.Add(function(module, command, player, args)
         if not square or not ISA.PBSystem_Server then return end
         local isoObject = ISA.PBSystem_Server:getIsoObjectOnSquare(square) or ISA.WorldUtil.findTypeOnSquare(square, "PowerBank")
         if isoObject then
-            if not instanceof(isoObject, "IsoGenerator") then
+            if not instanceof(isoObject, "IsoGenerator") or
+                (ISA.nativePowerBanks and not instanceof(isoObject, "IsoPowerBank")) then
                 isoObject = ISA.WorldUtil.replaceIsoObjectWithGenerator(isoObject)
             end
             if isoObject and ISA.PBSystem_Server:isValidIsoObject(isoObject) then

@@ -98,13 +98,10 @@ function Commands.activateGenerator(player,args)
 end
 
 function Commands.activatePowerbank(player,args)
+    if type(args) ~= "table" or type(args.pb) ~= "table" or type(args.activate) ~= "boolean" then return end
     local pb = getPowerBank(args.pb)
     if pb then
-        pb.on = args.activate
-        pb.switchchanged = true
-        pb:updateDrain()
-        pb:updateGenerator()
-        pb:saveData(true)
+        PBSystem.instance:setBankEnabled(player, pb, args.activate)
     end
 end
 

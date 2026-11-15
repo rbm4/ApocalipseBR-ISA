@@ -68,6 +68,8 @@ local function ActivatePowerbank(player, powerbank, activate)
     local character = getSpecificPlayer(player)
     if luautils.walkAdj(character, powerbank:getSquare(), true) then
         local pbX, pbY, pbZ = powerbank:getX(), powerbank:getY(), powerbank:getZ()
+        ISA.debugLog("Activation queued x=%s y=%s z=%s enabled=%s skill=%d",
+            tostring(pbX), tostring(pbY), tostring(pbZ), tostring(activate), character:getPerkLevel(Perks.Electricity))
         local action = ISA_ActivatePowerBank:new(character, powerbank, activate, pbX, pbY, pbZ)
         action.character = character
         action.activate = activate
@@ -76,6 +78,9 @@ local function ActivatePowerbank(player, powerbank, activate)
         action.y = pbY
         action.z = pbZ
         ISTimedActionQueue.add(action)
+    else
+        ISA.debugLog("Activation not queued x=%s y=%s z=%s reason=no-adjacent-path",
+            tostring(powerbank:getX()), tostring(powerbank:getY()), tostring(powerbank:getZ()))
     end
 end
 

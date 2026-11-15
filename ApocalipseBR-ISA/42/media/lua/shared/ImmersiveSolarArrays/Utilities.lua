@@ -1,9 +1,16 @@
 ---@class ImmersiveSolarArrays
 ---@field PBSystem_Server PowerbankSystem_Server
 local ISA = {}
+ISA.nativePowerBanks = isServer() and IsoPowerBank ~= nil
 
 local _gameTime
 local _season
+
+function ISA.debugLog(format, ...)
+    if SandboxVars and SandboxVars.ISA and SandboxVars.ISA.Debug == true then
+        print("[ISA][Debug] " .. string.format(format, ...))
+    end
+end
 
 ISA.patchClassMetaMethod = function(class, methodName, createPatch)
     local metatable = __classmetatables[class]

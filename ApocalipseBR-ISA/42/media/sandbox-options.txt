@@ -1,4 +1,8 @@
 VERSION = 1,
+option ISA.Debug {
+    page = ISA, translation = ISA_Debug,
+    type = boolean, default = false,
+}
 option ISA.ChargeFreq {
 	page = ISA, translation = ISA_ChargeFreq, valueTranslation = ISA_ChargeFreq,
 	type = enum, numValues = 2, default = 1,
