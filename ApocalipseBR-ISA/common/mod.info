@@ -1,0 +1,11 @@
+id=ApocalipseBR-ISA
+modversion=0.1.0
+name=ApocalipseBR - Immersive Solar Arrays
+description=Solar panels, battery banks and backup power for Apocalipse BR. B42 development fork of Immersive Solar Arrays.
+poster=poster.png
+pack=solarmod_tileset
+tiledef=solarmodtiledefs 575
+versionMin=42.13
+icon=media/textures/Item_SolarPanel.png
+author=Hypothetic
+require=\TargetSquareOnLoad

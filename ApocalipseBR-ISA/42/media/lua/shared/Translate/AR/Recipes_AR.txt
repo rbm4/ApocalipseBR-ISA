@@ -1,0 +1,11 @@
+Recipes_AR = {
+    Make_DIY_Battery = "hacer una batera de bricolaje",
+    WireCarBattery = "Batera de coche de alambre",
+    UnwireCarBattery = "Desconectar la batera del coche",
+    Make_Solar_Roof_Tile = "hacer un panel solar plano",
+    Reverse_Solar_Panel = "Dividir el panel solar en partes",
+    Create_Battery_Bank = "Crear banco de bateras",
+    Create_Solar_Failsafe = "Crear sistema de seguridad solar",
+    Make_Solar_Panel = "Hacer panel solar (parte)",
+    Make_Inverter = "Hacer inversor",
+}

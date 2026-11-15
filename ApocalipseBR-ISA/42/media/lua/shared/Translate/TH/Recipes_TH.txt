@@ -1,0 +1,11 @@
+Recipes_TH = {
+    Make_DIY_Battery = "ประดิษฐ์แบตเตอร์รี่เก็บประจุไฟ",
+    WireCarBattery = "ต่อสายไฟแบตเตอร์รี่รถ",
+    UnwireCarBattery = "ถอดสายไฟแบตเตอรี่รถ",
+    Make_Solar_Roof_Tile = "สร้างแผงโซลาร์เซลล์แบบวางราบ",
+    Reverse_Solar_Panel = "แยกแผงโซลาร์เซลล์กลับไปเป็นชิ้นส่วน",
+    Create_Battery_Bank = "สร้างฐานเก็บประจุไฟ",
+    Create_Solar_Failsafe = "สร้างสวิตช์กันไฟตกสำหรับโซลาร์เซลล์",
+    Make_Solar_Panel = "สร้างชิ้นส่วนแผงโซลาร์เซลล์",
+    Make_Inverter = "สร้างอินเวอร์เตอร์",
+}

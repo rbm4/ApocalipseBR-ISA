@@ -1,0 +1,11 @@
+Recipes_CS = {
+    Make_DIY_Battery = "Vyrobte si vlastn baterii",
+    WireCarBattery = "Drtov autobaterie",
+    UnwireCarBattery = "Odpojte autobaterii",
+    Make_Solar_Roof_Tile = "Vytvote ploch solrn panel",
+    Reverse_Solar_Panel = "Rozdlte solrn panel na sti",
+    Create_Battery_Bank = "Vytvote bateriovou banku",
+    Create_Solar_Failsafe = "Vytvote Solar Failsafe",
+    Make_Solar_Panel = "Vyrobte solrn panel (st)",
+    Make_Inverter = "Vytvote stda",
+}
