@@ -1,0 +1,178 @@
+local ISA = require "ImmersiveSolarArrays/Utilities"
+require "ImmersiveSolarArrays/UI/ISAUI"
+
+local rgbDefault, rgbGood, rgbBad = ISA.UI.rgbDefault, ISA.UI.rgbGood, ISA.UI.rgbBad
+
+local ISACursor = ISBaseObject:derive("ISACursor")
+
+function ISACursor:new(player,square)
+    local o = {}
+    setmetatable(o, self)
+    self.__index = self
+    o.player = player
+    o.playerObj = getSpecificPlayer(player)
+
+    o.xJoypad = -1
+    o.xJoy = square:getX()
+    o.yJoy = square:getY()
+    o.zJoypad = o.playerObj:getZ()
+    o.joyfocus = not wasMouseActiveMoreRecentlyThanJoypad() and JoypadState.players[player+1]
+    if o.joyfocus then
+        setJoypadFocus(player, o)
+    else
+        getCell():setDrag(o, player)
+    end
+
+    return o
+end
+
+function ISACursor:rotateMouse(x,y) end
+function ISACursor:rotateKey(key) end
+function ISACursor:getSprite() end
+function ISACursor:isValid(square,north) return false end
+function ISACursor:render(x,y,z,square) end
+function ISACursor:tryBuild(x,y,z) end
+function ISACursor:reinit() end
+function ISACursor:onLoseJoypadFocus(joypadData) self:close() end
+function ISACursor:onGainJoypadFocus(joypadData)
+    self.joyfocus = joypadData
+    getCell():setDrag(self,self.player)
+end
+function ISACursor:onJoypadDown(button, joypadData) return self:onJoypadPressButton(nil, joypadData, button) end
+function ISACursor:onJoypadPressButton(joypadIndex, joypadData, button)
+    if button == Joypad.AButton and self.valid then self:tryBuild(self.xJoy, self.yJoy, self.zJoypad) end
+    if button == Joypad.BButton then self:close() end
+    if button == Joypad.YButton then
+        self.xJoy = self.playerObj:getCurrentSquare():getX()
+        self.yJoy = self.playerObj:getCurrentSquare():getY()
+    end
+end
+function ISACursor:onJoypadDirDown(joypadData) self.yJoy = self.yJoy + 1 end
+function ISACursor:onJoypadDirUp(joypadData) self.yJoy = self.yJoy - 1 end
+function ISACursor:onJoypadDirRight(joypadData) self.xJoy = self.xJoy + 1 end
+function ISACursor:onJoypadDirLeft(joypadData) self.xJoy = self.xJoy - 1 end
+function ISACursor:getAPrompt() return self.valid and getText("IGUI_Controller_Interact") end
+function ISACursor:getBPrompt() return getText("UI_Cancel") end
+function ISACursor:getYPrompt() return getText("IGUI_SetCursorToPlayerLocation") end
+function ISACursor:getLBPrompt() end
+function ISACursor:getRBPrompt() end
+
+function ISACursor:toString() return self.Type end
+
+function ISACursor:hideTooltip()
+    if self.tooltip then
+        self.tooltip:removeFromUIManager()
+        self.tooltip:setVisible(false)
+        self.tooltip = nil
+    end
+end
+
+function ISACursor:deactivate()
+    self:hideTooltip()
+    if self.joyfocus then setPrevFocusForPlayer(self.player) end
+end
+
+function ISACursor:close()
+    getCell():setDrag(nil,self.player)
+end
+
+function ISACursor:isVisible()
+    local drag = getCell():getDrag(self.player)
+    return drag and (drag.Type == self.Type)
+end
+
+local ISAConnectPanelCursor = ISACursor:derive("ISAConnectPanelCursor")
+
+function ISAConnectPanelCursor:new(player,square, powerbank)
+    local pbSquare = (powerbank and powerbank:getSquare()) or square
+    if not pbSquare then return nil end
+
+    local pbSystem = ISA.PBSystem_Client or require("ImmersiveSolarArrays/Powerbank/PowerBankSystem_Client").instance
+    local luaPb = pbSystem and pbSystem:getValidLuaObjectOnSquare(pbSquare, getSpecificPlayer(player))
+    if not luaPb then return nil end
+
+    local o = ISACursor.new(self,player, pbSquare)
+    o.pbSquare = pbSquare
+    o.luaPb = luaPb
+
+    o.tooltip = ISWorldObjectContextMenu.addToolTip()
+    o.tooltip:setVisible(true)
+    o.tooltip:addToUIManager()
+    o.tooltip.maxLineWidth = 1000
+    if o.joyfocus then o.tooltip.followMouse = false; o.tooltip.contextMenu = o end
+
+    return o
+end
+
+function ISAConnectPanelCursor:isValid(square,north)
+    if self.luaPb and self.luaPb._isFallback and ISA.PBSystem_Client and self.pbSquare then
+        local realPb = ISA.PBSystem_Client:getLuaObjectOnSquare(self.pbSquare)
+        if realPb then
+            self.luaPb = realPb
+            self.sq = nil
+        end
+    end
+
+    if not (self.luaPb and self.luaPb:getIsoObject()) then
+        self:close()
+        self.valid = false
+        return false
+    end
+
+    square = self.joyfocus and getSquare(self.xJoy,self.yJoy,self.zJoypad) or square
+    if not square then
+        self.sq = nil
+        self.valid = false
+        if self.tooltip then
+            self.tooltip.description = ""
+        end
+        return false
+    end
+
+    if self.sq ~= square then
+        self.sq = square
+        self.luaPb:updateFromIsoObject()
+        self.panel, self.status = self.luaPb:getPanelStatusOnSquare(square)
+        self.valid = self.status == "not connected"
+
+        if self.tooltip then
+            if self.valid then
+                self.tooltip.description = rgbDefault.rich .. getText("ContextMenu_ISA_Connect_Panel_toolTip_isConnected_false")
+            elseif self.status == "connected" then
+                self.tooltip.description = rgbGood.rich .. getText("ContextMenu_ISA_Connect_Panel_toolTip_isConnected")
+            elseif not self.panel then
+                self.tooltip.description = rgbBad.rich .. getText("Tooltip_ISA_NoPanels")
+            elseif self.status == "far" then
+                self.tooltip.description = rgbBad.rich .. getText("Tooltip_ISA_PanelFar")
+            elseif self.status == "indoors" then
+                self.tooltip.description = rgbBad.rich .. getText("ContextMenu_ISA_Connect_Panel_toolTip_isOutside")
+            end
+        end
+    end
+    return self.valid == true
+end
+
+function ISAConnectPanelCursor:render(x,y,z,...)
+    if not (self.luaPb and self.luaPb:getIsoObject()) then return self:close() end
+    if self.joyfocus then x,y = self.xJoy,self.yJoy end
+    if not self.floorSprite then
+        self.floorSprite = IsoSprite.new()
+        self.floorSprite:LoadFramesNoDirPageSimple('media/ui/FloorTileCursor.png')
+    end
+
+    local c = self.valid and rgbGood or rgbBad
+    self.floorSprite:RenderGhostTileColor(x, y, z, c.r, c.g, c.b, 0.8)
+end
+
+function ISAConnectPanelCursor:tryBuild(x,y,z)
+    self.sq = nil
+    if self:isValid(getSquare(x,y,z)) and self.panel and self.luaPb then
+        ISA.UI.onConnectPanel(self.player,self.panel,self.luaPb)
+    end
+end
+
+function ISAConnectPanelCursor:getAPrompt()
+    if self.valid then return getText("ContextMenu_ISA_Connect_Panel") end
+end
+
+ISA.ConnectPanelCursor = ISAConnectPanelCursor

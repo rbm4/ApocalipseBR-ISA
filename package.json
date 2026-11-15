@@ -1,8 +1,13 @@
 {
+  "name": "apocalipsebr-isa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Apocalipse BR development fork of Immersive Solar Arrays for Project Zomboid B42.",
+  "author": "Hypothetic",
   "scripts": {
     "clean": "pzstudio clean",
-    "build": "pzstudio clean && pzstudio build",
-    "watch": "pzstudio clean && pzstudio build && pzstudio watch",
+    "build": "pzstudio build",
+    "watch": "pzstudio build && pzstudio watch",
     "update": "pzstudio update"
   }
 }

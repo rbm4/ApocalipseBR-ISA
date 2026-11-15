@@ -1,0 +1,4 @@
+# Translation files are UTF-8 encoded in Build 42
+* text=auto
+*.txt text working-tree-encoding=utf-8 encoding=utf-8
+*.json text working-tree-encoding=utf-8 encoding=utf-8

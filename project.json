@@ -1,18 +1,25 @@
 {
     "$schema": "https://raw.githubusercontent.com/Konijima/project-zomboid-studio/master/pzstudio.schema.json",
-    "title": "ApocalipseBR-ISA",
-    "authors": [],
+    "title": "ApocalipseBR - Immersive Solar Arrays",
+    "authors": ["Hypothetic"],
     "workshop": {
-        "visibility": "public",
+        "visibility": "unlisted",
         "tags": [
-            "Build 41"
+            "Build 42",
+            "Multiplayer"
         ],
         "excludes": []
     },
     "mods": {
         "ApocalipseBR-ISA": {
-            "name": "ApocalipseBR-ISA",
-            "description": ""
+            "name": "ApocalipseBR - Immersive Solar Arrays",
+            "description": "Solar panels, battery banks and backup power for Apocalipse BR. B42 development fork of Immersive Solar Arrays.",
+            "poster": "poster.png",
+            "icon": "media/textures/Item_SolarPanel.png",
+            "versionMin": "42.13",
+            "require": "\\TargetSquareOnLoad",
+            "pack": "solarmod_tileset",
+            "tiledef": "solarmodtiledefs 575"
         }
     }
 }

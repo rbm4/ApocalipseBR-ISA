@@ -1,3 +1,11 @@
-[h1]project-name[/h1]
+[h1]ApocalipseBR - Immersive Solar Arrays[/h1]
 
-Mod under development...
+Author: Hypothetic
+
+Solar panels, battery banks and backup power for Apocalipse BR on Project Zomboid Build 42.13+.
+
+Development baseline imported from Immersive Solar Arrays B42, version 25.0.2 (Workshop 3670551703).
+Upstream credits: RadX5, Poltergeist and ericogamo.
+Requires Target Square: On Load Commands (Workshop 2969455858).
+
+Performance and multiplayer refactoring is planned; this initial import preserves upstream gameplay logic.

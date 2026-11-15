@@ -1,0 +1,259 @@
+---@class ImmersiveSolarArrays
+local ISA = require "ImmersiveSolarArrays/Utilities"
+
+local WorldUtil = {}
+
+---@alias ISAType
+---| `PowerBank`
+---| `Panel`
+---| `FailSafe`
+
+WorldUtil.ISATypes = {
+    solarmod_tileset_01_0 = "PowerBank",
+    solarmod_tileset_01_6 = "Panel",
+    solarmod_tileset_01_7 = "Panel",
+    solarmod_tileset_01_8 = "Panel",
+    solarmod_tileset_01_9 = "Panel",
+    solarmod_tileset_01_10 = "Panel",
+    solarmod_tileset_01_15 = "Failsafe",
+}
+
+---Get the sprite name reliably for both B41 and B42 objects
+---@param isoObject IsoObject
+---@return string?
+function WorldUtil.getSpriteName(isoObject)
+    local name = isoObject:getTextureName()
+    if not name and isoObject:getSprite() then
+        name = isoObject:getSprite():getName()
+    end
+    return name
+end
+
+---return type of solar object
+---@param isoObject IsoObject
+---@return ISAType
+function WorldUtil.getType(isoObject)
+    if not isoObject then return nil end
+    if instanceof(isoObject, "IsoGenerator") and isoObject:getModData().generatorFullType == "ISA.PowerBank_test" then
+        return "PowerBank"
+    end
+    return WorldUtil.ISATypes[WorldUtil.getSpriteName(isoObject)]
+end
+
+---@param isoObject IsoObject
+---@param modType ISAType
+---@return boolean
+function WorldUtil.objectIsType(isoObject, modType)
+    if not isoObject then return false end
+    if instanceof(isoObject, "IsoGenerator") and isoObject:getModData().generatorFullType == "ISA.PowerBank_test" then
+        return modType == "PowerBank"
+    end
+    return WorldUtil.ISATypes[WorldUtil.getSpriteName(isoObject)] == modType
+end
+
+---@param level number Electical skill level
+---@return table
+function WorldUtil.getValidBackupArea(level)
+    return { radius = level, levels = level > 5 and 1 or 0, distance = math.pow(level, 2) * 1.25 }
+end
+
+---@param square IsoGridSquare
+---@param radius number
+---@param zLevels number
+---@param distance number
+---@return table<any,PowerBankObject_Server>
+function WorldUtil.getPowerBanksInArea(square, radius, zLevels, distance)
+    local all = {}
+    local x = square:getX()
+    local y = square:getY()
+    local z = square:getZ()
+    for ix = x - radius, x + radius do
+        for iy = y - radius, y + radius do
+            for iz = z - zLevels, z + zLevels do
+                local isquare = IsoUtils.DistanceToSquared(x,y,z,ix,iy,iz) <= distance and getSquare(ix, iy, iz)
+                local pb
+                if isquare then
+                    if isClient() then
+                        pb = ISA.PBSystem_Client:getLuaObjectOnSquare(isquare)
+                    else
+                        pb = ISA.PBSystem_Server:getLuaObjectOnSquare(isquare)
+                    end
+                end
+                if pb ~= nil then
+                    table.insert(all,pb)
+                end
+            end
+        end
+    end
+    return all
+end
+
+function WorldUtil.findOnSquare(square,sprite)
+    if not square then return nil end
+    local special = square:getSpecialObjects()
+    for i = 0, special:size()-1 do
+        local obj = special:get(i)
+        if obj:getTextureName() == sprite or (obj:getSprite() and obj:getSprite():getName() == sprite) then
+            return obj
+        end
+    end
+    local objects = square:getObjects()
+    for i = 0, objects:size()-1 do
+        local obj = objects:get(i)
+        if obj:getTextureName() == sprite or (obj:getSprite() and obj:getSprite():getName() == sprite) then
+            return obj
+        end
+    end
+end
+
+---@param square IsoGridSquare
+---@param type string
+---@return IsoObject?
+function WorldUtil.findTypeOnSquare(square, type)
+    if not square then return nil end
+    local special = square:getSpecialObjects()
+    for i = 0, special:size() - 1 do
+        local obj = special:get(i)
+        if WorldUtil.ISATypes[obj:getTextureName()] == type or (obj:getSprite() and WorldUtil.ISATypes[obj:getSprite():getName()] == type) then
+            return obj
+        end
+    end
+    local objects = square:getObjects()
+    for i = 0, objects:size()-1 do
+        local obj = objects:get(i)
+        if WorldUtil.ISATypes[obj:getTextureName()] == type or (obj:getSprite() and WorldUtil.ISATypes[obj:getSprite():getName()] == type) then
+            return obj
+        end
+    end
+    return nil
+end
+
+---@param square IsoGridSquare
+---@param spriteName string
+---@param index number
+---@param fullSpawn boolean
+---@return IsoGenerator
+function WorldUtil.placePowerBank(square, spriteName, index, fullSpawn)
+    local sprite = getSprite(spriteName)
+    local props = sprite and sprite:getProperties()
+    local fullType = (props and props:has("CustomItem") and props:get("CustomItem"))
+                     or ("Moveables." .. spriteName)
+
+    local generator = IsoGenerator.new(square:getCell())
+    generator:setSprite(sprite)
+    generator:setSquare(square)
+
+    --set sprite, condition, fuel, fulltype from item
+    generator:getModData().generatorFullType = fullType
+
+    if fullSpawn then
+        square:AddSpecialObject(generator, index)
+        generator:createContainersFromSpriteProperties()
+        local container = generator:getContainer()
+        if container then
+            container:setExplored(true)
+            if container.setAcceptItemFunction then
+                container:setAcceptItemFunction("AcceptItemFunction.ISA_Batteries")
+            end
+        end
+        generator:transmitCompleteItemToClients()
+        ---these auto transmit, do after sending object
+        generator:setCondition(100)
+        generator:setFuel(100)
+        generator:setConnected(true)
+        triggerEvent("OnObjectAdded", generator)
+    end
+
+    return generator
+end
+
+---@param isoObject IsoObject
+---@return IsoGenerator
+function WorldUtil.replaceIsoObjectWithGenerator(isoObject)
+    if not isoObject then return nil end
+
+    local square = isoObject:getSquare()
+    if not square then return nil end
+
+    if instanceof(isoObject, "IsoGenerator") then
+        return isoObject
+    end
+
+    local function findExistingGenerator(objects)
+        for i = 0, objects:size() - 1 do
+            local obj = objects:get(i)
+            if instanceof(obj, "IsoGenerator") and (WorldUtil.getType(obj) == "PowerBank" or WorldUtil.getSpriteName(obj) == "solarmod_tileset_01_0") then
+                if isoObject ~= obj and isoObject:getSquare() == square then
+                    square:transmitRemoveItemFromSquare(isoObject)
+                    isoObject:removeFromWorld()
+                    isoObject:removeFromSquare()
+                end
+                return obj
+            end
+        end
+    end
+
+    local existing = findExistingGenerator(square:getSpecialObjects()) or findExistingGenerator(square:getObjects())
+    if existing then return existing end
+
+    local item = instanceItem("ISA.PowerBank_test")
+    if not item then
+        print("[ISA] Failed to instance ISA.PowerBank_test, trying Base.Generator")
+        item = instanceItem("Base.Generator")
+    end
+
+    local gen = IsoGenerator.new(item, square:getCell(), square)
+
+    -- Preserve visuals
+    if isoObject:getSprite() then
+        gen:setSprite(isoObject:getSprite())
+    else
+        gen:setSprite("solarmod_tileset_01_0")
+    end
+    gen:setSquare(square)
+
+    -- Identify as PowerBank
+    gen:getModData().generatorFullType = "ISA.PowerBank_test"
+
+    if isoObject:getSquare() == square then
+        square:transmitRemoveItemFromSquare(isoObject)
+        isoObject:removeFromWorld()
+        isoObject:removeFromSquare()
+    end
+
+    return gen
+end
+
+---Find all real generators (not PowerBanks) in an area around a square
+---@param square IsoGridSquare
+---@param radius number
+---@param zLevels number
+---@param distance number
+---@return table<number, IsoGenerator>
+function WorldUtil.getGeneratorsInArea(square, radius, zLevels, distance)
+    local all = {}
+    local x = square:getX()
+    local y = square:getY()
+    local z = square:getZ()
+    for ix = x - radius, x + radius do
+        for iy = y - radius, y + radius do
+            for iz = z - zLevels, z + zLevels do
+                if ix >= 0 and iy >= 0 and iz >= 0 then
+                    local dist = IsoUtils.DistanceToSquared(x, y, z, ix, iy, iz)
+                    if dist <= distance then
+                        local isquare = getSquare(ix, iy, iz)
+                        if isquare then
+                            local generator = isquare:getGenerator()
+                            if generator and generator:isConnected() and WorldUtil.ISATypes[WorldUtil.getSpriteName(generator)] ~= "PowerBank" then
+                                table.insert(all, generator)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return all
+end
+
+ISA.WorldUtil = WorldUtil
