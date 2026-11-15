@@ -35,7 +35,7 @@ module Base {
 
         }
     }
-    craftRecipe Make DIY Battery {
+    craftRecipe MakeDIYBattery {
         timedAction = MakingElectrical,
         time = 80,
         category = Electrical,
@@ -53,7 +53,7 @@ module Base {
             item 1 ISA.DIYBattery,
         }
     }
-    craftRecipe Make Solar Panel {
+    craftRecipe MakeSolarPanel {
         category = Electrical,
         timedAction = MakingElectrical,
         time = 250,
@@ -73,7 +73,7 @@ module Base {
             item 1 ISA.SolarPanel,
         }
     }
-    craftRecipe Make Inverter {
+    craftRecipe MakeInverter {
         category = Electrical,
         timedAction = MakingElectrical,
         time = 250,
