@@ -34,7 +34,7 @@ Avoid permanent full-world/full-registry tick scans. Use maintained indexes, loa
 
 Do not force-load chunks just to integrate virtual energy. Do not mutate live world objects, inventories, Lua state or callbacks from worker threads. Any future async computation must use immutable inputs and validated results applied on the game thread.
 
-Never fix solar toxicity by indiscriminately clearing a building's hazard: real combustion generators must remain dangerous. Prove the creation/load/activation/sync paths before removing current workarounds. Dependency removal must preserve pending spawns and initialization state on existing saves; do not just delete `require` metadata.
+Never fix solar toxicity by indiscriminately clearing a building's hazard: real combustion generators must remain dangerous. Prove the creation/load/activation/sync paths before removing current workarounds. The user confirmed this fork was not active in the existing save: legacy ISA spawn migration is outside this rollout. Acquisition uses native loot registrations; do not restore the coordinate queue or room-discovery spawning. See F-001 in the documentation index.
 
 ## Documentation convention
 

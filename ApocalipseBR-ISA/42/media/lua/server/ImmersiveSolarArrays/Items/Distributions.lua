@@ -1,362 +1,307 @@
--- fixme SandboxVars are sometimes the default values at this stage - MP server values are loaded OnPreDistributionMerge???, SP are loaded when creating a character
+-- Native loot registrations only: no coordinate queue or room-discovery spawns.
+require "Items/Distributions"
+require "Items/ProceduralDistributions"
+require "Vehicles/VehicleDistributions"
 
-require 'Items/Distributions'
-require 'Items/ProceduralDistributions'
----@class ImmersiveSolarArrays
 local ISA = require "ImmersiveSolarArrays/Utilities"
+local Loot = {}
+ISA.Distributions = Loot
 
-----------------------------------------------------------------------------------------------------------------------
-local subDist = SuburbsDistributions
-local pdList = ProceduralDistributions.list
-local vehDist = VehicleDistributions
+-- Weights are relative loot weights, not percentages.
+local definitions = {
+    {
+        fullType = "ISA.ISAMag1", multiplier = "LRMMisc",
+        targets = {
+            { "procedural", "BookstoreBooks", 1.0 },
+            { "procedural", "BookstoreMisc", 0.5 },
+            { "procedural", "CrateMagazines", 1.0 },
+            { "procedural", "ElectronicStoreMagazines", 2.0 },
+            { "procedural", "EngineerTools", 0.2 },
+            { "procedural", "LibraryBooks", 0.8 },
+            { "procedural", "LivingRoomShelf", 0.5 },
+            { "procedural", "LivingRoomShelfNoTapes", 0.5 },
+            { "procedural", "MagazineRackMixed", 0.6 },
+            { "procedural", "PostOfficeBooks", 0.5 },
+            { "procedural", "PostOfficeMagazines", 0.8 },
+            { "procedural", "ShelfGeneric", 0.2 },
+            { "vehicle", "ElectricianTruckBed", 1.0 },
+        },
+    },
+    {
+        fullType = "ISA.SolarPanel", multiplier = "LRMSolarPanels",
+        targets = {
+            { "procedural", "ArmyHangarTools", 0.05 },
+            { "procedural", "ArmyStorageElectronics", 0.10 },
+            { "procedural", "CrateCarpentry", 0.05 },
+            { "procedural", "CrateElectronics", 0.10 },
+            { "procedural", "CrateFarming", 0.05 },
+            { "procedural", "CrateMechanics", 0.10 },
+            { "procedural", "CrateMetalwork", 0.05 },
+            { "procedural", "CrateRandomJunk", 0.10 },
+            { "procedural", "CrateTools", 0.05 },
+            { "procedural", "ElectronicStoreAppliances", 0.10 },
+            { "procedural", "ElectronicStoreMisc", 0.15 },
+            { "procedural", "EngineerTools", 0.10 },
+            { "procedural", "GarageMechanics", 0.10 },
+            { "procedural", "GarageMetalwork", 0.05 },
+            { "procedural", "GarageTools", 0.05 },
+            { "procedural", "GigamartHouseElectronics", 0.10 },
+            { "procedural", "GigamartFarming", 0.05 },
+            { "procedural", "LoggingFactoryTools", 0.05 },
+            { "procedural", "MechanicShelfElectric", 0.05 },
+            { "procedural", "MechanicShelfMisc", 0.05 },
+            { "procedural", "MetalShopTools", 0.05 },
+            { "procedural", "StoreShelfElectronics", 0.20 },
+            { "procedural", "ToolStoreFarming", 0.10 },
+            { "procedural", "ToolStoreMetalwork", 0.10 },
+            { "procedural", "ToolStoreMisc", 0.15 },
+            { "procedural", "ToolStoreTools", 0.10 },
+            { "procedural", "OtherGeneric", 0.10 },
+            { "vehicle", "ElectricianTruckBed", 1.00 },
+        },
+    },
+    {
+        fullType = "ISA.DeepCycleBattery", multiplier = "LRMBatteries",
+        targets = {
+            { "procedural", "JanitorMisc", 0.15 },
+            { "procedural", "StoreShelfElectronics", 0.15 },
+            { "procedural", "MechanicShelfElectric", 0.15 },
+            { "procedural", "StoreShelfMechanics", 0.20 },
+            { "procedural", "CrateElectronics", 0.15 },
+            { "procedural", "CrateMechanics", 0.15 },
+            { "procedural", "ToolStoreTools", 0.15 },
+            { "procedural", "ToolStoreMisc", 0.20 },
+            { "procedural", "ArmyStorageElectronics", 0.15 },
+            { "procedural", "ElectronicStoreMisc", 0.15 },
+            { "procedural", "CrateRandomJunk", 0.15 },
+            { "procedural", "CrateTools", 0.15 },
+            { "procedural", "OtherGeneric", 0.15 },
+            { "procedural", "GarageMechanics", 0.15 },
+            { "procedural", "ToolStoreFarming", 0.15 },
+            { "procedural", "CrateFarming", 0.03 },
+            { "procedural", "CrateMetalwork", 0.03 },
+            { "vehicle", "ElectricianTruckBed", 1.00 },
+        },
+    },
+    {
+        fullType = "ISA.SuperBattery", multiplier = "LRMBatteries",
+        targets = {
+            { "procedural", "JanitorMisc", 0.05 },
+            { "procedural", "StoreShelfElectronics", 0.05 },
+            { "procedural", "MechanicShelfElectric", 0.05 },
+            { "procedural", "StoreShelfMechanics", 0.10 },
+            { "procedural", "CrateElectronics", 0.05 },
+            { "procedural", "CrateMechanics", 0.05 },
+            { "procedural", "ToolStoreTools", 0.05 },
+            { "procedural", "ToolStoreMisc", 0.10 },
+            { "procedural", "ArmyStorageElectronics", 0.20 },
+            { "procedural", "ElectronicStoreMisc", 0.05 },
+            { "procedural", "CrateRandomJunk", 0.05 },
+            { "procedural", "CrateTools", 0.05 },
+            { "procedural", "OtherGeneric", 0.05 },
+            { "procedural", "GarageMechanics", 0.05 },
+            { "procedural", "ToolStoreFarming", 0.05 },
+            { "procedural", "CrateFarming", 0.05 },
+            { "procedural", "CrateMetalwork", 0.05 },
+            { "vehicle", "ElectricianTruckBed", 0.40 },
+        },
+    },
+    {
+        fullType = "ISA.ISAInverter", multiplier = "LRMMisc",
+        targets = {
+            { "procedural", "StoreShelfElectronics", 0.10 },
+            { "procedural", "StoreShelfMechanics", 0.10 },
+            { "procedural", "CrateElectronics", 0.10 },
+            { "procedural", "CrateMechanics", 0.10 },
+            { "procedural", "MechanicShelfMisc", 0.10 },
+            { "procedural", "MechanicShelfElectric", 0.10 },
+            { "procedural", "ToolStoreMisc", 0.10 },
+            { "procedural", "ToolStoreTools", 0.10 },
+            { "procedural", "GigamartHouseElectronics", 0.10 },
+            { "procedural", "ArmyStorageElectronics", 0.10 },
+            { "procedural", "ElectronicStoreMisc", 0.10 },
+            { "procedural", "CrateRandomJunk", 0.10 },
+            { "procedural", "CrateTools", 0.10 },
+            { "procedural", "OtherGeneric", 0.10 },
+            { "procedural", "GarageMechanics", 0.10 },
+            { "procedural", "ElectronicStoreAppliances", 0.10 },
+            { "procedural", "ToolStoreFarming", 0.10 },
+            { "procedural", "CrateFarming", 0.03 },
+            { "procedural", "CrateMetalwork", 0.03 },
+            { "vehicle", "ElectricianTruckBed", 0.60 },
+        },
+    },
+    {
+        fullType = "ISA.SolarFailsafe", multiplier = "LRMMisc",
+        targets = {
+            { "procedural", "CrateElectronics", 0.01, "junk" },
+            { "procedural", "GigamartHouseElectronics", 0.01, "junk" },
+            { "procedural", "ArmyStorageElectronics", 0.01, "junk" },
+            { "procedural", "ElectronicStoreMisc", 0.01, "junk" },
+            { "vehicle", "ElectricianTruckBed", 0.01 },
+        },
+    },
+    {
+        fullType = "ISA.PowerBank", multiplier = "BatteryBankSpawn",
+        targets = {
+            { "procedural", "CrateGenerator", 2.0, "junk" },
+            { "procedural", "GeneratorRoom", 0.20 },
+            { "procedural", "CrateElectronics", 0.10 },
+            { "procedural", "CrateTools", 0.05 },
+            { "procedural", "GarageTools", 0.05 },
+            { "procedural", "ElectronicStoreAppliances", 0.15 },
+            { "vehicle", "ElectricianTruckBed", 0.10 },
+        },
+    },
+}
 
-----------------------------------------------------------------------------------------------------------------------
----
+local registered = false
+local weights = {}
+local bankMultipliers = { 0, 0.3, 1, 3 }
 
-ISA.Distributions = {}
-
-local function insertRecursive(insertKey,insertInto,insertFrom,default)
-    for key,value in pairs(insertFrom) do
-        local _insertInto = insertInto[key]
-        if not _insertInto and default then
-            _insertInto = copyTable(default)
-            insertInto[key] = _insertInto
-        end
-        if type(_insertInto) == "table" then
-            if key == insertKey then
-                for _,i in ipairs(value) do
-                    table.insert(_insertInto,i)
-                end
-            else
-                insertRecursive(insertKey,_insertInto,value,default)
+local function trackItems(items)
+    for i = 1, #items, 2 do
+        for _, definition in ipairs(definitions) do
+            if items[i] == definition.fullType then
+                weights[#weights + 1] = { items = items, index = i + 1, base = items[i + 1], multiplier = definition.multiplier }
+                break
             end
         end
     end
 end
 
-----------------------------------------------------------------------------------------------------------------------
---- add custom tables to ProceduralDistributions
+function Loot.register()
+    if registered then return end
+    local pdList = ProceduralDistributions.list
+    local subDist = SuburbsDistributions
 
-pdList.ISABatteries = {
-    rolls = 4,
-    items = {
-        "ISA.DeepCycleBattery", 36,
-        "ISA.SuperBattery", 8,
-        "ISA.DIYBattery", 8,
-        "ISA.WiredCarBattery", 8,
-    }
-}
-pdList.ISABatteriesCache = {
-    rolls = 4,
-    items = {
-        "ISA.DeepCycleBattery", 64,
-        "ISA.SuperBattery", 32,
-        "ISA.DIYBattery", 32,
-        "ISA.WiredCarBattery", 32,
-    }
-}
-pdList.ISASolarBox = {
-    rolls = 4,
-    items = {
-        "ISA.SolarPanel", 48,
-        "ISA.DeepCycleBattery", 48,
-        "ISA.SuperBattery", 24,
-    },
-    junk = {
-        rolls = 1,
+    pdList.ISABatteries = {
+        rolls = 4,
         items = {
-            "ISA.ISAMag1", 64,
-            "ISA.ISAInverter", 64,
-            "ISA.SolarPanel", 16,
-            "ISA.DeepCycleBattery", 16,
-            "ISA.SuperBattery", 16,
-            "ISA.SolarFailsafe", 0.1,
-            "Base.ElectronicsScrap", 20,
-            "Base.MetalBar", 10,
-            "Base.SmallSheetMetal", 10,
-            "Base.Screws", 5,
-            "Base.ElectricWire", 20,
-            "Base.RemoteCraftedV3", 0.1,
+            "ISA.DeepCycleBattery", 36,
+            "ISA.SuperBattery", 8,
+            "ISA.DIYBattery", 8,
+            "ISA.WiredCarBattery", 8,
         }
     }
-}
-
-----------------------------------------------------------------------------------------------------------------------
----edit procList tables for room / cache house types
-
-subDist.all.BatteryBank = {
-    procedural = true,
-    procList = {
-        {name="ISABatteries", min=0, max=99},
-    },
-}
-subDist.all.SolarBox = {
-    procedural = true,
-    procList = {
-        { name = "ISASolarBox", min = 0, max = 99, weightChance = 80 },
-        { name = "ISABatteries", min = 0, max = 99, weightChance = 20 },
-        { name = "ISABatteriesCache", min = 0, max = 99, weightChance = 10 },
-    },
-}
-
-subDist.ISASolarBoxCache = copyTable(subDist.electronicsstorage)
-subDist.ISASolarBoxCache.isStore = nil
-subDist.ISASolarBoxCache.SolarBox = copyTable(pdList.ISASolarBox)
-subDist.ISASolarBoxCache.SolarBox.rolls = 32
-
-insertRecursive("procList", subDist, {
-    electronicsstorage = {
-        metal_shelves = {
-            procList = {
-                { name = "ISASolarBox", min = 0, max = 1, weightChance = 10 },
-            },
+    pdList.ISABatteriesCache = {
+        rolls = 4,
+        items = {
+            "ISA.DeepCycleBattery", 64,
+            "ISA.SuperBattery", 32,
+            "ISA.DIYBattery", 32,
+            "ISA.WiredCarBattery", 32,
+        }
+    }
+    pdList.ISASolarBox = {
+        rolls = 4,
+        items = {
+            "ISA.SolarPanel", 48,
+            "ISA.DeepCycleBattery", 48,
+            "ISA.SuperBattery", 24,
         },
-        crate = {
-            proclist = {
-                { name = "ISASolarBox", min = 0, max = 1, weightChance = 20 },
-                { name = "ISABatteries", min = 0, max = 1, weightChance = 5 },
-                { name = "ISABatteriesCache", min = 0, max = 1, weightChance = 5 },
-            },
-        },
-    },
-    garagestorage = {
-        crate = {
-            procList = {
-                { name = "ISASolarBox", min = 0, max = 1, weightChance = 3 },
-            },
-        },
-    },
-    storageunit = {
-        crate = {
-            procList = {
-                { name = "ISASolarBox", min = 0, max = 1, weightChance = 5 },
-            },
-        },
-        metal_shelves = {
-            proclist = {
-                { name = "ISASolarBox", min = 0, max = 1, weightChance = 3 },
+        junk = {
+            rolls = 1,
+            items = {
+                "ISA.ISAMag1", 64,
+                "ISA.ISAInverter", 64,
+                "ISA.SolarPanel", 16,
+                "ISA.DeepCycleBattery", 16,
+                "ISA.SuperBattery", 16,
+                "ISA.SolarFailsafe", 0.1,
+                "Base.ElectronicsScrap", 20,
+                "Base.MetalBar", 10,
+                "Base.SmallSheetMetal", 10,
+                "Base.Screws", 5,
+                "Base.ElectricWire", 20,
+                "Base.RemoteCraftedV3", 0.1,
             }
         }
-    },
-    warehouse = {
-        crate = {
-            procList = {
-                { name = "ISASolarBox", min = 0, max = 1, weightChance = 5 },
-                { name = "ISABatteries", min = 0, max = 1, weightChance = 5 },
-            },
-        },
-    },
-    --Cache
-    SafehouseLoot = {
-        metal_shelves = {
-            procList = {
-                { name = "ISASolarBox", min = 0, max = 1, weightChance = 5 },
-            },
-        },
-    },
-    ISASolarBoxCache = {
-        crate = {
-            procList = {
-                { name = "ISASolarBox", min = 0, max = 3, weightChance = 25 },
-                { name = "ISABatteries", min = 0, max = 1, weightChance = 10 },
-            },
-        },
-        metal_shelves = {
-            procList = {
-                { name = "ISASolarBox", min = 0, max = 3, weightChance = 20 },
-            },
+    }
+
+    ----------------------------------------------------------------------------------------------------------------------
+    ---edit procList tables for room / cache house types
+
+    subDist.all.BatteryBank = {
+        procedural = true,
+        procList = {
+            {name="ISABatteries", min=0, max=99},
         },
     }
-})
+    subDist.all.SolarBox = {
+        procedural = true,
+        procList = {
+            { name = "ISASolarBox", min = 0, max = 99, weightChance = 80 },
+            { name = "ISABatteries", min = 0, max = 99, weightChance = 20 },
+            { name = "ISABatteriesCache", min = 0, max = 99, weightChance = 10 },
+        },
+    }
 
-----------------------------------------------------------------------------------------------------------------------
---- Insert items to item lists
+    -- Native annotated-map stashes remain opt-in; the engine fills these containers.
+    subDist.ISASolarBoxCache = copyTable(subDist.electronicsstorage or {})
+    subDist.ISASolarBoxCache.isStore = nil
+    subDist.ISASolarBoxCache.SolarBox = copyTable(pdList.ISASolarBox)
+    subDist.ISASolarBoxCache.SolarBox.rolls = 32
 
-function ISA.Distributions.distributeItem(info)
-    local multiplier = SandboxVars.ISA[info.LRM]
-    for i = 1, #info.entries do
-        local entry = info.entries[i]
-        table.insert(entry[2], info.fullType)
-        table.insert(entry[2], entry[1] * multiplier)
+    for _, definition in ipairs(definitions) do
+        for _, target in ipairs(definition.targets) do
+            local source = target[1] == "vehicle" and VehicleDistributions or pdList
+            local distribution = source[target[2]]
+            if distribution and target[4] then distribution = distribution[target[4]] end
+            local items = distribution and distribution.items
+            if items then
+                items[#items + 1] = definition.fullType
+                items[#items + 1] = target[3]
+                weights[#weights + 1] = { items = items, index = #items, base = target[3], multiplier = definition.multiplier }
+            else
+                print("[ISA] Missing optional loot target: " .. target[1] .. "/" .. target[2] .. (target[4] and "/" .. target[4] or ""))
+            end
+        end
     end
+
+    for _, name in ipairs({ "ISABatteries", "ISABatteriesCache", "ISASolarBox" }) do
+        local distribution = pdList[name]
+        trackItems(distribution.items)
+        if distribution.junk then trackItems(distribution.junk.items) end
+    end
+    local stash = subDist.ISASolarBoxCache.SolarBox
+    trackItems(stash.items)
+    if stash.junk then trackItems(stash.junk.items) end
+    registered = true
 end
 
-function ISA.Distributions.insertItemsToMultipleLists(distTable, targetNames, items)
-    local itemsSize = #items
-    for i = 1, #targetNames do
-        local target = distTable[targetNames[i]]
-        target = target ~= nil and target.items or nil
-        if target ~= nil then
-            for ii = 1, itemsSize do
-                table.insert(target, items[ii])
+-- Used by the existing native annotated-map registration.
+function Loot.insertItemsToMultipleLists(distributions, names, items)
+    for _, name in ipairs(names) do
+        local distribution = distributions[name]
+        if distribution and distribution.items then
+            for _, value in ipairs(items) do
+                table.insert(distribution.items, value)
             end
         end
     end
 end
 
-function ISA.Distributions.insertDistributions()
-
-    ISA.Distributions.distributeItem({
-        fullType = "ISA.ISAMag1",
-        LRM = "LRMMisc",
-        entries = {
-            { 1.0, pdList["BookstoreBooks"].items },
-            { 0.5, pdList["BookstoreMisc"].items },
-            { 1.0, pdList["CrateMagazines"].items },
-            { 2.0, pdList["ElectronicStoreMagazines"].items },
-            { 0.2, pdList["EngineerTools"].items },
-            { 0.8, pdList["LibraryBooks"].items },
-            { 0.5, pdList["LivingRoomShelf"].items },
-            { 0.5, pdList["LivingRoomShelfNoTapes"].items },
-            { 0.6, pdList["MagazineRackMixed"].items },
-            { 0.5, pdList["PostOfficeBooks"].items },
-            { 0.8, pdList["PostOfficeMagazines"].items },
-            { 0.2, pdList["ShelfGeneric"].items },
-            { 1.0, vehDist["ElectricianTruckBed"].items }
-        },
-    })
-
-    ISA.Distributions.distributeItem({
-        fulltype = "ISA.SolarPanel",
-        LRM = "LRMSolarPanels",
-        entries = {
-            { 0.05, pdList["ArmyHangarTools"].items },
-            { 0.10, pdList["ArmyStorageElectronics"].items },
-            { 0.05, pdList["CrateCarpentry"].items },
-            { 0.10, pdList["CrateElectronics"].items },
-            { 0.05, pdList["CrateFarming"].items },
-            { 0.10, pdList["CrateMechanics"].items },
-            { 0.05, pdList["CrateMetalwork"].items },
-            { 0.10, pdList["CrateRandomJunk"].items },
-            { 0.05, pdList["CrateTools"].items },
-            { 0.10, pdList["ElectronicStoreAppliances"].items },
-            { 0.15, pdList["ElectronicStoreMisc"].items },
-            { 0.10, pdList["EngineerTools"].items },
-            { 0.10, pdList["GarageMechanics"].items },
-            { 0.05, pdList["GarageMetalwork"].items },
-            { 0.05, pdList["GarageTools"].items },
-            { 0.10, pdList["GigamartHouseElectronics"].items },
-            { 0.05, pdList["GigamartFarming"].items },
-            { 0.05, pdList["LoggingFactoryTools"].items },
-            { 0.05, pdList["MechanicShelfElectric"].items },
-            { 0.05, pdList["MechanicShelfMisc"].items },
-            { 0.05, pdList["MetalShopTools"].items },
-            { 0.20, pdList["StoreShelfElectronics"].items },
-            { 0.10, pdList["ToolStoreFarming"].items },
-            { 0.10, pdList["ToolStoreMetalwork"].items },
-            { 0.15, pdList["ToolStoreMisc"].items },
-            { 0.10, pdList["ToolStoreTools"].items },
-            { 0.10, pdList["OtherGeneric"].items },
-            { 0.01, subDist.all.metal_shelves.items },
-            { 1.00, vehDist["ElectricianTruckBed"].items }
-        },
-    })
-
-    ISA.Distributions.distributeItem({
-        fulltype = "ISA.DeepCycleBattery",
-        LRM = "LRMBatteries",
-        entries = {
-            { 0.15, pdList["JanitorMisc"].items },
-            { 0.15, pdList["StoreShelfElectronics"].items },
-            { 0.15, pdList["MechanicShelfElectric"].items },
-            { 0.20, pdList["StoreShelfMechanics"].items },
-            { 0.15, pdList["CrateElectronics"].items },
-            { 0.15, pdList["CrateMechanics"].items },
-            { 0.15, pdList["ToolStoreTools"].items },
-            { 0.20, pdList["ToolStoreMisc"].items },
-            { 0.15, pdList["ArmyStorageElectronics"].items },
-            { 0.15, pdList["ElectronicStoreMisc"].items },
-            { 0.15, pdList["CrateRandomJunk"].items },
-            { 0.15, pdList["CrateTools"].items },
-            { 0.15, pdList["OtherGeneric"].items },
-            { 0.15, pdList["GarageMechanics"].items },
-            { 0.15, pdList["ToolStoreFarming"].items },
-            { 0.03, pdList["CrateFarming"].items },
-            { 0.03, pdList["CrateMetalwork"].items },
-            { 0.01, subDist.all.metal_shelves.items },
-            { 1.00, vehDist["ElectricianTruckBed"].items }
-        },
-    })
-
-    ISA.Distributions.distributeItem({
-        fulltype = "ISA.SuperBattery",
-        LRM = "LRMBatteries",
-        entries = {
-            { 0.05, pdList["JanitorMisc"].items },
-            { 0.05, pdList["StoreShelfElectronics"].items },
-            { 0.05, pdList["MechanicShelfElectric"].items },
-            { 0.10, pdList["StoreShelfMechanics"].items },
-            { 0.05, pdList["CrateElectronics"].items },
-            { 0.05, pdList["CrateMechanics"].items },
-            { 0.05, pdList["ToolStoreTools"].items },
-            { 0.10, pdList["ToolStoreMisc"].items },
-            { 0.20, pdList["ArmyStorageElectronics"].items },
-            { 0.05, pdList["ElectronicStoreMisc"].items },
-            { 0.05, pdList["CrateRandomJunk"].items },
-            { 0.05, pdList["CrateTools"].items },
-            { 0.05, pdList["OtherGeneric"].items },
-            { 0.05, pdList["GarageMechanics"].items },
-            { 0.05, pdList["ToolStoreFarming"].items },
-            { 0.05, pdList["CrateFarming"].items },
-            { 0.05, pdList["CrateMetalwork"].items },
-            { 0.01, subDist.all.metal_shelves.items },
-            { 0.40, vehDist["ElectricianTruckBed"].items }
-        },
-    })
-
-    ISA.Distributions.distributeItem({
-        fulltype = "ISA.ISAInverter",
-        LRM = "LRMMisc",
-        entries = {
-            { 0.10, pdList["StoreShelfElectronics"].items },
-            { 0.10, pdList["StoreShelfMechanics"].items },
-            { 0.10, pdList["CrateElectronics"].items },
-            { 0.10, pdList["CrateMechanics"].items },
-            { 0.10, pdList["MechanicShelfMisc"].items },
-            { 0.10, pdList["MechanicShelfElectric"].items },
-            { 0.10, pdList["ToolStoreMisc"].items },
-            { 0.10, pdList["ToolStoreTools"].items },
-            { 0.10, pdList["GigamartHouseElectronics"].items },
-            { 0.10, pdList["ArmyStorageElectronics"].items },
-            { 0.10, pdList["ElectronicStoreMisc"].items },
-            { 0.10, pdList["CrateRandomJunk"].items },
-            { 0.10, pdList["CrateTools"].items },
-            { 0.10, pdList["OtherGeneric"].items },
-            { 0.10, pdList["GarageMechanics"].items },
-            { 0.10, pdList["ElectronicStoreAppliances"].items },
-            { 0.10, pdList["ToolStoreFarming"].items },
-            { 0.03, pdList["CrateFarming"].items },
-            { 0.03, pdList["CrateMetalwork"].items },
-            { 0.01, subDist.all.metal_shelves.items },
-            { 0.60, vehDist["ElectricianTruckBed"].items }
-        },
-    })
-
-    ISA.Distributions.distributeItem({
-        fulltype = "ISA.SolarFailsafe",
-        LRM = "LRMMisc",
-        entries = {
-            { 0.01, pdList["CrateElectronics"].junk.items },
-            { 0.01, pdList["GigamartHouseElectronics"].junk.items },
-            { 0.01, pdList["ArmyStorageElectronics"].junk.items },
-            { 0.01, pdList["ElectronicStoreMisc"].junk.items },
-            { 0.01, vehDist["ElectricianTruckBed"].items }
-        },
-    })
-
-    ---TODO after debugging sandbox options load
-    -- ISA.Distributions = nil
-end
-
---- remake distributions based on sandbox, used by stash items
-local function OnLoadedMapZones()
-    if ItemPickerJava.doParse then
-        ItemPickerJava.doParse = nil
-        ItemPickerJava.Parse()
+function Loot.applySandboxWeights()
+    -- SandboxOptions.load follows distribution merging in the inspected engine.
+    -- Apply server options here, once startup has reached OnLoadedMapZones.
+    local sandbox = SandboxVars.ISA or {}
+    for _, entry in ipairs(weights) do
+        local multiplier
+        if entry.multiplier == "BatteryBankSpawn" then
+            multiplier = bankMultipliers[sandbox.BatteryBankSpawn or 3] or 1
+        else
+            multiplier = sandbox[entry.multiplier]
+            if type(multiplier) ~= "number" then multiplier = 1 end
+        end
+        entry.items[entry.index] = entry.base * multiplier
     end
-    ISA.distributions = nil
-    ISA.Distributions = nil
+    -- Coalesce the existing annotated-map reparse into this startup pass.
+    ItemPickerJava.doParse = nil
+    ItemPickerJava.Parse()
 end
 
-ISA.Distributions.insertDistributions()
-Events.OnLoadedMapZones.Add(OnLoadedMapZones)
+Events.OnPostDistributionMerge.Add(Loot.register)
+Events.OnLoadedMapZones.Add(Loot.applySandboxWeights)
+
+return Loot

@@ -6,4 +6,4 @@ Solar panels, battery banks and backup power for Apocalipse BR on Project Zomboi
 
 Development baseline imported from Immersive Solar Arrays B41
 
-Performance and multiplayer refactoring is planned; this initial import preserves upstream gameplay logic.
+Equipment is distributed through native container and vehicle loot tables. TargetSquareOnLoad is not required. Further performance and multiplayer refactoring is planned.

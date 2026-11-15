@@ -18,7 +18,6 @@
             "poster": "poster.png",
             "icon": "media/textures/Item_SolarPanel.png",
             "versionMin": "42.13",
-            "require": "\\TargetSquareOnLoad",
             "pack": "solarmod_tileset",
             "tiledef": "solarmodtiledefs 575"
         }

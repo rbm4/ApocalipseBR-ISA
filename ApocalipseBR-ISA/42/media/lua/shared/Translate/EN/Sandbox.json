@@ -1,0 +1,11 @@
+{
+    "Sandbox_ISA_BatteryBankSpawn": "Battery bank loot rarity",
+    "Sandbox_ISA_BatteryBankSpawn_tooltip": "Relative loot weight for battery banks in generator/equipment containers and electrician vehicles. Does not replace normal generators.",
+    "Sandbox_ISA_BatteryBankSpawn_option1": "None",
+    "Sandbox_ISA_BatteryBankSpawn_option2": "Very rare",
+    "Sandbox_ISA_BatteryBankSpawn_option3": "Rare",
+    "Sandbox_ISA_BatteryBankSpawn_option4": "Uncommon",
+    "Sandbox_ISA_LRMSolarPanels_tooltip": "Multiplier for solar panel loot weights in containers, vehicles and solar stashes.",
+    "Sandbox_ISA_LRMBatteries_tooltip": "Multiplier for battery loot weights in containers, vehicles and solar stashes.",
+    "Sandbox_ISA_LRMMisc_tooltip": "Multiplier for manual, inverter and failsafe loot weights in containers, vehicles and solar stashes."
+}

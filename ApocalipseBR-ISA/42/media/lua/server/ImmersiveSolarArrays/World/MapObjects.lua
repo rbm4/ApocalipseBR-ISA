@@ -1,5 +1,4 @@
 local ISA = require "ImmersiveSolarArrays/Utilities"
-local RandomWorldSpawns = require "ImmersiveSolarArrays/World/RandomWorldSpawns"
 
 if isClient() then
 
@@ -45,10 +44,9 @@ else
         if not square then error("ISA: OnNewWithSprite no square") return end
 
         if isaType == "PowerBank" then
-            local index = isoObject:getObjectIndex()
-            local spriteName = ISA.WorldUtil.getSpriteName(isoObject) or "solarmod_tileset_01_0"
-            square:transmitRemoveItemFromSquare(isoObject)
-            RandomWorldSpawns.addToWorld(square, spriteName, index)
+            -- Map-authored banks still use the normal bank lifecycle. Random
+            -- equipment now comes from native container/vehicle loot tables.
+            LoadPowerbank(isoObject)
         else
             square:getSpecialObjects():add(isoObject)
         end

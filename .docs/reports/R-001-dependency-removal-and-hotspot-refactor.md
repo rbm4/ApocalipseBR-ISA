@@ -1,5 +1,7 @@
 # R-001: Dependency removal and hotspot refactor
 
+> Decision update, 2026-11-15: the user confirmed no existing-save ISA state needs preservation and selected native loot registrations instead of fixed world placements. [F-001](../features/F-001-native-loot-distributions.md) implements that approach. The owned queue and migration recommendations below are historical alternatives, not current requirements. Other hotspot refactors remain pending.
+
 Date: **2026-11-15**  
 Status: **Investigation complete; implementation proposed**  
 Scope: the current `ApocalipseBR-ISA/42` fork and local B42 engine/Lua snapshots. No runtime change, migration, dependency removal or benchmark was performed for this report.
@@ -18,7 +20,7 @@ All module paths below are relative to `ApocalipseBR-ISA/42/media/lua/` unless s
 
 | Concern | Source entry point |
 |---|---|
-| Deferred spawns, initial flag, room spawns | [`server/ImmersiveSolarArrays/World/RandomWorldSpawns.lua`](../../ApocalipseBR-ISA/42/media/lua/server/ImmersiveSolarArrays/World/RandomWorldSpawns.lua), `doRolls` (103), `InitSpawns` (151) |
+| Deferred spawns, initial flag, room spawns | Former `server/ImmersiveSolarArrays/World/RandomWorldSpawns.lua`, `doRolls` (103), `InitSpawns` (151); removed by F-001 |
 | Object creation/load | [`World/MapObjects.lua`](../../ApocalipseBR-ISA/42/media/lua/server/ImmersiveSolarArrays/World/MapObjects.lua), `LoadPowerbank`, `OnNewWithSprite` |
 | Bank tick/periodic/inventory behavior | [`PowerBankSystem_Server.lua`](../../ApocalipseBR-ISA/42/media/lua/server/ImmersiveSolarArrays/PowerBank/PowerBankSystem_Server.lua), `onTransferItem` (195), `updatePowerbanks` (254), `preventToxicBuildings` (285) |
 | Generator and battery operations | [`PowerBankObject_Server.lua`](../../ApocalipseBR-ISA/42/media/lua/server/ImmersiveSolarArrays/PowerBank/PowerBankObject_Server.lua), `getTotalWhenoff`, `updateDrain`, `updateGenerator`, `loadGenerator`, `checkPanels` |

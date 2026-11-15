@@ -8,7 +8,7 @@ Updated: **2026-11-15**. Working conventions: [AGENT.md](../AGENT.md).
 
 | ID | Document | Status | Date |
 |---|---|---|---|
-| R-001 | [Dependency removal and performance refactor](reports/R-001-dependency-removal-and-hotspot-refactor.md) | Investigation complete; implementation proposed | 2026-11-15 |
+| R-001 | [Dependency removal and performance refactor](reports/R-001-dependency-removal-and-hotspot-refactor.md) | Loot decision implemented by F-001; remaining hotspots proposed | 2026-11-15 |
 
 ## Issues
 
@@ -20,7 +20,11 @@ See [issue record conventions](issues/README.md). R-001 contains additional find
 
 ## Features
 
-No individual feature records yet. See [feature record conventions](features/README.md). R-001 proposes the spawn queue and simulation architecture; neither is implemented by the documentation change.
+| ID | Document | Status | Date |
+|---|---|---|---|
+| F-001 | [Native loot distributions](features/F-001-native-loot-distributions.md) | Implemented; Lua integration/build checked; in-game validation pending | 2026-11-15 |
+
+See [feature record conventions](features/README.md). F-001 supersedes R-001's deferred-spawn queue/migration proposal. The other hotspot refactors remain pending.
 
 ## Reference
 
