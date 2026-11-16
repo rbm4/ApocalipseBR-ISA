@@ -101,9 +101,10 @@ function ISAWindowDetails:render()
         self:drawLineB(runtime and runtime.failsafe,"IGUI_ISAWindow_Details_Failsafe",textY)
         textY = textY + fontHeightSm
         if pb.conGenerator then
-            for _,text in ipairs({getText("IGUI_ISABackup_State"),getText(stateKey),
+            local genR,genG,genB=BackupStatus.color(pb)
+            for row,text in ipairs({getText("IGUI_ISABackup_State"),getText(stateKey),
                 BackupStatus.thresholdText(runtime),BackupStatus.fuelText(runtime),getText("IGUI_ISABackup_ControlHint")}) do
-                self:drawText(text,textX,textY,1,1,1,1,UIFont.Small)
+                self:drawText(text,textX,textY,row<=2 and genR or 1,row<=2 and genG or 1,row<=2 and genB or 1,1,UIFont.Small)
                 textY=textY+fontHeightSm
             end
         end

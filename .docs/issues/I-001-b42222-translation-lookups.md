@@ -30,3 +30,9 @@ Catalogs are under [Translate](../../ApocalipseBR-ISA/42/media/lua/shared/Transl
 Parsed all ten JSON files with duplicate-key detection and checked string values, category prefixes, exact item/recipe/entity references, ISA Lua/stash references, sandbox labels/tooltips/enum options and EN/PTBR placeholder parity. Verified touched mod files as UTF-8 without BOM and checked the Git diff for whitespace errors.
 
 The remaining runtime check is to reload the mod in a PTBR 42.22.2 client and inspect inventory names, construction entries, picked-up moveables, summary values including percentages and time estimates, sandbox options, context menus and stash annotations. Other hardcoded Lua text is outside this catalog-contract correction.
+
+## Backup percentage follow-up
+
+The user reported percentage output such as `97.6$s%`. New backup threshold and fuel/condition translations incorrectly used `%1%` and `%2%` instead of `%1%%` and `%2%%`. The native loader converts numbered arguments to Java format specifiers; an unescaped trailing percent then triggers Translator's compatibility fallback, which rewrites the already-converted argument and leaves `$s` in the result.
+
+Corrected those keys in EN/PTBR `IG_UI.json`. `tests/test_status_formatting.py` compiles the exact 42.22.2 `formatFixer`, `fixupArgs` and formatting/fallback methods with diagnostic doubles. It reproduces `97.6$s%` from the old template and verifies all ten percentage templates in both catalogs format without fallback, stray `$s`, or doubled percent signs. This is a native formatter regression check; the client must reload its translation cache for in-game verification.

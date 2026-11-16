@@ -14,6 +14,11 @@ function Status.get(bank)
     return keys.pending,nil
 end
 
+function Status.color(bank)
+    if bank.conGenerator then return 0.2,0.85,0.35 end
+    return 0.6,0.6,0.6
+end
+
 function Status.thresholdText(runtime)
     if not runtime then return getText("IGUI_ISABackup_Pending") end
     return getText("IGUI_ISABackup_Thresholds",string.format("%.1f",runtime.startPercent),string.format("%.1f",runtime.stopPercent))

@@ -57,7 +57,7 @@
     "IGUI_ISABackup_LowCondition": "Backup unavailable: generator needs repair",
     "IGUI_ISABackup_Grid": "Backup stopped: mains electricity available",
     "IGUI_ISABackup_Pending": "Waiting for the server's backup status",
-    "IGUI_ISABackup_Thresholds": "Starts at %1% charge; stops at %2%",
-    "IGUI_ISABackup_FuelCondition": "Generator fuel: %1%; condition: %2%",
+    "IGUI_ISABackup_Thresholds": "Starts at %1%% charge; stops at %2%%",
+    "IGUI_ISABackup_FuelCondition": "Generator fuel: %1%%; condition: %2%%",
     "IGUI_ISABackup_ControlHint": "Disconnect the backup to enable manual on/off control."
 }

@@ -110,7 +110,7 @@ class ManagedBackupTest(unittest.TestCase):
             function getSquare() error('Backup-square lookup is not needed to render runtime') end
             local view=setmetatable({width=600,parent={parent={luaPB=bank,playerObj=character}},
                 devButton={setVisible=function() end},drawn={}}, {__index=ISA.StatusWindowDetailsView})
-            function view:drawText(text) self.drawn[text]=true end
+            function view:drawText(text,x,y,r,g,b) self.drawn[text]={r,g,b} end
             view.drawTextRight=view.drawText
             function view:drawRect() end
             function view:drawRectBorder() end
@@ -118,6 +118,12 @@ class ManagedBackupTest(unittest.TestCase):
             view:render()
             assert(view.drawn.IGUI_ISABackup_RunningCharging and view.drawn.IGUI_ISABackup_Thresholds)
             assert(view.drawn.IGUI_ISABackup_FuelCondition and view.drawn.IGUI_ISABackup_ControlHint)
+            local color=view.drawn.IGUI_ISABackup_RunningCharging
+            assert(color[1]==0.2 and color[2]==0.85 and color[3]==0.35)
+            assert(view.drawn.IGUI_ISABackup_Thresholds[1]==1)
+            local Status=require 'ImmersiveSolarArrays/BackupStatus'
+            local r,g,b=Status.color({conGenerator=false})
+            assert(r==0.6 and g==0.6 and b==0.6)
         ''')
 
     def test_context_menu_disables_wrapped_controls_only_for_owned_source(self):

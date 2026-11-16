@@ -37,7 +37,7 @@ function PowerBank:shouldDrain()
     local square = self:getSquare()
     if not self.on then return false end
     if self.conGenerator and self.conGenerator.ison then return false end
-    if Grid.current(square) then return false end
+    if Grid.coversLoad(self.drain,Grid.current(square)) then return false end
     return true
 end
 

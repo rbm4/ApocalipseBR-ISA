@@ -2,6 +2,8 @@
 
 ID I-004. Created 2026-11-15. Status correction implemented; isolated regression checks and packaging complete; live retest pending.
 
+Follow-up: [I-005](I-005-mixed-grid-generator-load.md) identifies the actual mixed-coverage failure in the next live capture. Mains really is available there, but the bank's native consumption list still contains generator-dependent appliances. I-005 corrects the remaining blanket exemption; this record describes the earlier, incomplete correction.
+
 ## Evidence and expected behavior
 
 The user moved the bank indoors, rebuilt its panel/backup setup and enabled it. Reported solar output was approximately 145 Ah/h against 280 Ah/h of appliance consumption, but the bank did not discharge while appliances remained powered.

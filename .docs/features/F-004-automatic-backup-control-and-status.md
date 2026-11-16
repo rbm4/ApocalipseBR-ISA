@@ -30,6 +30,8 @@ Control is also evaluated at the completed observation boundary, so a newly inst
 
 New UI labels use `IGUI_ISABackup_*` keys in the existing EN and PTBR `IG_UI.json` files. Touched Lua/JSON files are UTF-8 without BOM. Internal protocol/debug strings remain untranslated.
 
+The backup operation label and automatic-control badge are green when a backup is connected; the disconnected summary label is neutral gray. Details uses the same connection color for its operation heading/state while keeping numeric information unchanged. Percentage templates escape literal percent signs as `%%`; the native formatter regression and rendering-color checks are recorded in [I-001](../issues/I-001-b42222-translation-lookups.md).
+
 The Solar Fail Safe construction recipe also uses `Tooltip_ISA_SolarFailsafe` in EN/PTBR `Tooltip.json`, explicitly requiring placement on the same tile as the bank's connected backup generator. This uses the native CraftRecipe `ToolTip` field, matching the existing power-bank construction tooltip.
 
 ## Validation

@@ -18,4 +18,11 @@ function Grid.current(square)
     return square~=nil and not square:isOutside() and square:hasGridPower()
 end
 
+-- Both demand calculators exclude mains-powered appliances. Native generator
+-- consumption also includes its 0.02 L/h idle floor (ISA converts at 800 Ah/L).
+function Grid.coversLoad(drain, available)
+    local idle=SandboxVars.ISA.DrainCalc==1 and 0 or 16
+    return available==true and (drain or 0)<=idle+0.00001
+end
+
 return Grid

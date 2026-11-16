@@ -10,7 +10,7 @@ local function ConsumptionScan(square)
 			local myObject = square:getObjects():get(objs-1);
 			if (myObject ~= nil) then
 				--print("object not nil")
-				if instanceof(myObject, "IsoWorldInventoryObject") == false then
+				if instanceof(myObject, "IsoWorldInventoryObject") == false and not ItemContainer.isObjectPowered(myObject, false) then
 					--print("is this running1")
 
 					if instanceof(myObject, "IsoTelevision") then

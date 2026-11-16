@@ -103,7 +103,7 @@
     "IGUI_ISABackup_LowCondition": "Gerador indisponível: precisa de reparo",
     "IGUI_ISABackup_Grid": "Gerador parado: rede elétrica disponível",
     "IGUI_ISABackup_Pending": "Aguardando o estado do gerador no servidor",
-    "IGUI_ISABackup_Thresholds": "Liga com %1% de carga; desliga com %2%",
-    "IGUI_ISABackup_FuelCondition": "Combustível do gerador: %1%; condição: %2%",
+    "IGUI_ISABackup_Thresholds": "Liga com %1%% de carga; desliga com %2%%",
+    "IGUI_ISABackup_FuelCondition": "Combustível do gerador: %1%%; condição: %2%%",
     "IGUI_ISABackup_ControlHint": "Desconecte o gerador de reserva para permitir o controle manual."
 }

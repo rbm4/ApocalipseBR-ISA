@@ -1,5 +1,6 @@
 if isClient() then return end
 local Model = {}
+local Grid = require 'ImmersiveSolarArrays/GridPower'
 local EPS = 1e-8
 function Model.observe(state, event)
     local q=state.events or {first=1,last=0}
@@ -51,6 +52,7 @@ function Model.transition(bank, hour, powered)
 end
 
 function Model.control(bank,start,drain,grid)
+    grid=Grid.coversLoad(drain,grid)
     local b = bank.ISA_backup
     local demand = bank.on and not grid and drain or 0
     local available = b and start >= (b.availableFrom or 0)
@@ -71,6 +73,7 @@ end
 
 -- One bounded state-machine step. No world calls, physical toggles or item loops.
 function Model.step(bank, start, finish, output, drain, grid)
+    grid=Grid.coversLoad(drain,grid)
     local b = bank.ISA_backup
     Model.applyObservations(bank,start)
     local events=b and b.events

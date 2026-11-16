@@ -99,8 +99,8 @@ function PowerBank:shouldDrain(isoPb)
     if self.conGenerator and self.conGenerator.ison then return false end
 
     if isoPb then
-        if Grid.current(isoPb:getSquare()) then return false end
-    elseif self.ISA_energyConfig and self.ISA_energyConfig.gridEligible==true and Grid.exists() then return false end
+        if Grid.coversLoad(self.drain,Grid.current(isoPb:getSquare())) then return false end
+    elseif self.ISA_energyConfig and Grid.coversLoad(self.drain,self.ISA_energyConfig.gridEligible==true and Grid.exists()) then return false end
     return true
 end
 

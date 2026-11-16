@@ -131,7 +131,7 @@ function Native.publishBackupStatus(bank,now)
     elseif not b.failsafe then state="no_failsafe"
     elseif b.fuel<=0 then state="no_fuel"
     elseif b.condition<=20 and not b.ison then state="low_condition"
-    elseif bank.ISA_energyConfig.gridEligible==true and Grid.exists() then state="grid"
+    elseif Grid.coversLoad(bank.drain,bank.ISA_energyConfig.gridEligible==true and Grid.exists()) then state="grid"
     elseif b.ison then state=production>0 and bank.charge<bank.maxcapacity and "running_charging" or "running_waiting" end
     local capacity=bank.maxcapacity
     local low=math.min(bank.drain,capacity*0.25)
@@ -207,17 +207,18 @@ function Native.update(generator,now,allowance,deadline,existingBank,source)
         if generator then bank.ISA_energyConfig.gridEligible=localGrid end
         Native.publishBackupStatus(bank,now)
         local mains=bank.ISA_energyConfig.gridEligible==true and Grid.exists()
-        Model.transition(bank,now,mains
+        local mainsCoversLoad=Grid.coversLoad(bank.drain,mains)
+        Model.transition(bank,now,mainsCoversLoad
             or (b and b.ison and b.fuel>0 and b.condition>0) or (bank.on and bank.charge>0) or false)
         bank:saveData(true)
         Native.metrics.broadcasts=Native.metrics.broadcasts+1
         Native.metrics.maxFinalizeMs=math.max(Native.metrics.maxFinalizeMs or 0,getTimestampMs()-finalizeStarted)
         Native.metrics.maxCatchupMs=math.max(Native.metrics.maxCatchupMs or 0,getTimestampMs()-(bank._ISA_backlogSince or finalizeStarted))
         bank._ISA_backlogSince=nil
-        ISA.debugLog("Power bank settled x=%s y=%s z=%s hour=%.3f charge=%.3f capacity=%.3f backupFuel=%.3f supply=%s on=%s grid=%s gridEligible=%s drain=%.3f backupOn=%s simOn=%s simDrain=%.3f",
+        ISA.debugLog("Power bank settled x=%s y=%s z=%s hour=%.3f charge=%.3f capacity=%.3f backupFuel=%.3f supply=%s on=%s grid=%s gridEligible=%s drain=%.3f backupOn=%s simOn=%s simDrain=%.3f gridCoversLoad=%s",
             tostring(bank.x),tostring(bank.y),tostring(bank.z),now,bank.charge,bank.maxcapacity,
             b and b.fuel or 0,tostring(bank.ISA_supply.powered),tostring(bank.on),tostring(mains),
-            tostring(bank.ISA_energyConfig.gridEligible),bank.drain,tostring(b and b.ison or false),tostring(cached.on),cached.drain)
+            tostring(bank.ISA_energyConfig.gridEligible),bank.drain,tostring(b and b.ison or false),tostring(cached.on),cached.drain,tostring(mainsCoversLoad))
     else bank:saveData(false) end
     if generator then
         if processed==now then generator:completeUpdate(processed,SandboxVars.ISA.ChargeFreq==1 and 1/6 or 1)

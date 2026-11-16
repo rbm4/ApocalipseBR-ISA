@@ -6,6 +6,8 @@ Subsequent behavior update: [F-004](F-004-automatic-backup-control-and-status.md
 
 Subsequent correction: [I-004](../issues/I-004-indoor-bank-false-mains-power.md) replaces the old global hydro flag with current B42 grid policy, local mains eligibility and historical shutoff splitting. Indoor placement alone does not exempt a bank from consumption.
 
+Mixed-coverage follow-up: [I-005](../issues/I-005-mixed-grid-generator-load.md) preserves positive native appliance demand even when the bank tile has mains. Native demand already excludes mains-powered appliances; location availability does not cover the entire generator radius.
+
 ## Scheduling and synchronization
 
 `NativeSimulation` owns two FIFO queues, with one entry per bank. Native Java callbacks enqueue/defer rather than integrating history inline. OnTick drains due work only; it does not scan the registry, panels, appliances or food. Two of every three service choices prefer ordinary work and one prefers banks more than 24 game hours behind, with work-conserving fallback. FIFO rotation and deduplication prevent a single long history monopolizing service.

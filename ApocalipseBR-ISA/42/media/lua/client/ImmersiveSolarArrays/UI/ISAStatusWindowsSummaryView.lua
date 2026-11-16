@@ -224,10 +224,11 @@ function ISAWindowsSumaryTab:render()
 	local c3X, c3Y, c3H = 12, 296, 128
 	self:drawCardBox(c3X,c3Y,cardW,c3H,getText("IGUI_ISASummary_EmergencyTitle"),self.textureCables)
 	local stateKey,runtime=BackupStatus.get(pb)
+	local genR,genG,genB=BackupStatus.color(pb)
 	if pb.conGenerator then
-		self:drawStatusBadge(c3X+cardW-10,c3Y+5,getText("IGUI_ISABackup_Managed"),0.90,0.65,0.15)
+		self:drawStatusBadge(c3X+cardW-10,c3Y+5,getText("IGUI_ISABackup_Managed"),genR,genG,genB)
 	end
-	self:drawText(getText(stateKey),leftColX,c3Y+38,0.9,0.95,1,1,UIFont.Small)
+	self:drawText(getText(stateKey),leftColX,c3Y+38,genR,genG,genB,1,UIFont.Small)
 	if pb.conGenerator then
 		self:drawText(BackupStatus.thresholdText(runtime),leftColX,c3Y+58,0.8,0.85,0.9,1,UIFont.Small)
 		self:drawText(BackupStatus.fuelText(runtime),leftColX,c3Y+78,0.8,0.85,0.9,1,UIFont.Small)
