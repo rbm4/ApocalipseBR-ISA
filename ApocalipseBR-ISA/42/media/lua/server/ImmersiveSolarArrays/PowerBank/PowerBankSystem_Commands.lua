@@ -78,29 +78,51 @@ function Commands.moveBattery(player,args)
 end
 
 function Commands.plugGenerator(player,args)
-    if not args or not args.gen or not args.pbList then return end
+    if type(args)~="table" or type(args.gen)~="table" or type(args.pbList)~="table" or type(args.plug)~="boolean" then return false end
     if #args.pbList > 64 then return false end
+    local ISA=require "ImmersiveSolarArrays/Utilities"
+    local function coordinates(value)
+        return type(value)=="table" and type(value.x)=="number" and value.x%1==0
+            and type(value.y)=="number" and value.y%1==0 and type(value.z)=="number" and value.z%1==0
+    end
+    if not coordinates(args.gen) then return false end
     local square = getSquare(args.gen.x,args.gen.y,args.gen.z)
     local generator = square and square:getGenerator()
+    if args.plug and (not generator or not generator:isConnected()) then return false end
+    local accepted=false
     for _,i in ipairs(args.pbList) do
-        local pb = getPowerBank(i)
+        local pb = coordinates(i) and getPowerBank(i)
         local one={gen=args.gen,plug=args.plug,pbList={i}}
-        if pb and settled(pb,"plugGenerator",player,one) then
-            if args.plug and generator then
-                noise("adding backup")
-                pb:connectBackupGenerator(generator)
-            else
-                if pb.conGenerator and pb.conGenerator.x == args.gen.x and pb.conGenerator.y == args.gen.y and pb.conGenerator.z == args.gen.z then
-                    noise("removing backup")
-                    pb:disconnectBackupGenerator()
-                end
+        local nearby=pb and (ISA.WorldUtil.isWithinPowerBankRange(player,pb:getSquare())
+            or (square and ISA.WorldUtil.isWithinPowerBankRange(player,square)))
+        local link=pb and pb.conGenerator
+        local matching=link and link.x==args.gen.x and link.y==args.gen.y and link.z==args.gen.z
+        if pb and nearby and (args.plug or matching) then
+            if args.plug then
+                local area=ISA.WorldUtil.getValidBackupArea(SandboxVars.ISA.BackupGeneratorRange)
+                if IsoUtils.DistanceToSquared(pb.x,pb.y,args.gen.x,args.gen.y)>area.distance or math.abs(pb.z-args.gen.z)>area.levels then return false end
             end
-            pb:saveData(true)
+            if settled(pb,"plugGenerator",player,one) then
+                local changed
+                if args.plug then
+                    noise("adding backup")
+                    changed=pb:connectBackupGenerator(generator)
+                else
+                    noise("removing backup")
+                    changed=pb:disconnectBackupGenerator()
+                end
+                accepted=changed~=false or accepted
+            else
+                accepted=true
+            end
         end
     end
+    return accepted
 end
 
 function Commands.activateGenerator(player,args)
+    local ISA=require "ImmersiveSolarArrays/Utilities"
+    if ISA.NativeSimulation then return false end
     if not args or not args.pb then return end
     local pb = getPowerBank(args.pb)
     if pb and pb.conGenerator then

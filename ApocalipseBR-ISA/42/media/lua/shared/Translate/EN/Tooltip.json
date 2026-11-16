@@ -1,3 +1,4 @@
 {
-    "Tooltip_PowerBank": "Stores solar panel energy in batteries and powers nearby electrical devices."
+    "Tooltip_PowerBank": "Stores solar panel energy in batteries and powers nearby electrical devices.",
+    "Tooltip_ISA_SolarFailsafe": "Must be installed on the same tile as a Power Bank's connected backup generator to enable automatic generator control."
 }

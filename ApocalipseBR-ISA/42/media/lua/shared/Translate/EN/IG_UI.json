@@ -45,5 +45,19 @@
     "IGUI_ISA_Entity_SolarPanelMounted": "Mounted Solar Panel",
     "IGUI_ISA_Entity_SolarPanelWall": "Wall Solar Panel",
     "IGUI_ISA_Entity_PowerBank": "Power Bank",
-    "IGUI_ISA_Entity_SolarFailsafe": "Solar Fail Safe"
+    "IGUI_ISA_Entity_SolarFailsafe": "Solar Fail Safe",
+    "IGUI_ISABackup_State": "Backup generator operation",
+    "IGUI_ISABackup_Managed": "Automatic control",
+    "IGUI_ISABackup_RunningCharging": "Backup running automatically; solar charging batteries",
+    "IGUI_ISABackup_RunningWaiting": "Backup running automatically; waiting for sunlight",
+    "IGUI_ISABackup_Standby": "Automatic backup on standby",
+    "IGUI_ISABackup_NoFailsafe": "Automatic start unavailable: install a Solar Fail Safe",
+    "IGUI_ISABackup_BankOff": "Backup stopped: power bank switched off",
+    "IGUI_ISABackup_NoFuel": "Backup unavailable: generator out of fuel",
+    "IGUI_ISABackup_LowCondition": "Backup unavailable: generator needs repair",
+    "IGUI_ISABackup_Grid": "Backup stopped: mains electricity available",
+    "IGUI_ISABackup_Pending": "Waiting for the server's backup status",
+    "IGUI_ISABackup_Thresholds": "Starts at %1% charge; stops at %2%",
+    "IGUI_ISABackup_FuelCondition": "Generator fuel: %1%; condition: %2%",
+    "IGUI_ISABackup_ControlHint": "Disconnect the backup to enable manual on/off control."
 }

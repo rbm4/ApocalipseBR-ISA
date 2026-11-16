@@ -91,5 +91,19 @@
     "IGUI_ISA_Entity_SolarPanelMounted": "Painel Solar de Chão",
     "IGUI_ISA_Entity_SolarPanelWall": "Painel Solar de Parede",
     "IGUI_ISA_Entity_PowerBank": "Banco de Baterias",
-    "IGUI_ISA_Entity_SolarFailsafe": "Mecanismo de Segurança Solar"
+    "IGUI_ISA_Entity_SolarFailsafe": "Mecanismo de Segurança Solar",
+    "IGUI_ISABackup_State": "Funcionamento do gerador de reserva",
+    "IGUI_ISABackup_Managed": "Controle automático",
+    "IGUI_ISABackup_RunningCharging": "Gerador acionado automaticamente; painéis recarregando baterias",
+    "IGUI_ISABackup_RunningWaiting": "Gerador acionado automaticamente; aguardando luz solar",
+    "IGUI_ISABackup_Standby": "Gerador de reserva aguardando ativação automática",
+    "IGUI_ISABackup_NoFailsafe": "Ativação indisponível: instale um Mecanismo de Segurança Solar",
+    "IGUI_ISABackup_BankOff": "Gerador parado: banco de baterias desligado",
+    "IGUI_ISABackup_NoFuel": "Gerador indisponível: sem combustível",
+    "IGUI_ISABackup_LowCondition": "Gerador indisponível: precisa de reparo",
+    "IGUI_ISABackup_Grid": "Gerador parado: rede elétrica disponível",
+    "IGUI_ISABackup_Pending": "Aguardando o estado do gerador no servidor",
+    "IGUI_ISABackup_Thresholds": "Liga com %1% de carga; desliga com %2%",
+    "IGUI_ISABackup_FuelCondition": "Combustível do gerador: %1%; condição: %2%",
+    "IGUI_ISABackup_ControlHint": "Desconecte o gerador de reserva para permitir o controle manual."
 }

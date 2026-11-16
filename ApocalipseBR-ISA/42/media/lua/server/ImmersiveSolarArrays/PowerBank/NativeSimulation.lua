@@ -2,6 +2,7 @@ if isClient() then return end
 local ISA = require 'ImmersiveSolarArrays/Utilities'
 local History = require 'ImmersiveSolarArrays/PowerBank/ProductionHistory'
 local Model = require 'ImmersiveSolarArrays/PowerBank/EnergyModel'
+local Grid = require 'ImmersiveSolarArrays/GridPower'
 local Native = {MAX_STEPS=32, MAX_JOBS=8, MAX_FRAME_STEPS=256, FRAME_MS=2}
 local started = false
 local normal,backlog = {head=1,tail=0},{head=1,tail=0}
@@ -39,7 +40,7 @@ local function enqueue(bank,generator,backup)
 end
 function Native.recordProduction()
     local s=ISA.PBSystem_Server
-    if s then History.append(nowHour(),s:getModifiedSolarOutput(1),getWorld():isHydroPowerOn()) end
+    if s then History.append(nowHour(),s:getModifiedSolarOutput(1),Grid.exists()) end
 end
 function Native.advance(bank,now,drain,allowance,deadline)
     local d=History.get()
@@ -59,11 +60,15 @@ function Native.advance(bank,now,drain,allowance,deadline)
     end
     local index=History.at(start)
     local steps=0
+    local cutoff=Grid.cutoffHour()
     while start<now and steps<(allowance or Native.MAX_STEPS) do
         if deadline and steps>0 and getTimestampMs()>=deadline then break end
         local nextSample=d.samples[index+1]
         local finish=nextSample and math.min(nextSample.hour,now) or now
-        local grid=d.samples[index].hydro==true and bank.ISA_energyConfig and bank.ISA_energyConfig.indoors
+        if cutoff>start then finish=math.min(finish,cutoff) end
+        -- Also constrain old samples recorded from the stale global hydro flag.
+        local grid=d.samples[index].hydro==true and start<cutoff
+            and bank.ISA_energyConfig and bank.ISA_energyConfig.gridEligible==true
         start=Model.step(bank,start,finish,d.samples[index].output,drain,grid)
         steps=steps+1
         if nextSample and start>=nextSample.hour then index=index+1 end
@@ -73,13 +78,18 @@ function Native.advance(bank,now,drain,allowance,deadline)
 end
 local function observeBackup(bank,source)
     if not source then return end
+    if not PowerBankBackup.claim(source,{x=bank.x,y=bank.y,z=bank.z}) then
+        bank.conGenerator=false
+        bank.ISA_backup=nil
+        bank.ISA_backupStatus=nil
+        return
+    end
     if not source:isConnected() then
         bank.conGenerator=false
         bank.ISA_backup=nil
         PowerBankBackup.release(source)
         return
     end
-    if not PowerBankBackup.claim(source,{x=bank.x,y=bank.y,z=bank.z}) then return end
     local fuel,condition,ison=source:getFuel(),source:getCondition(),source:isActivated()
     local state=bank.ISA_backup
     local rate=source:getTotalPowerUsing()*(SandboxVars.GeneratorFuelConsumption or 1)
@@ -104,10 +114,33 @@ local function observeBackup(bank,source)
     end
     state.observedFuel,state.observedCondition,state.observedOn=fuel,condition,ison
     state.observedRate,state.observedFailsafe=rate,failsafe
+    state.managed=true
     return source
 end
 function Native.bindBackup(bank,source)
     return observeBackup(bank,source)
+end
+function Native.publishBackupStatus(bank,now)
+    local b=bank.ISA_backup
+    if not bank.conGenerator then bank.ISA_backupStatus=nil; return end
+    if not b then bank.ISA_backupStatus=nil; return end
+    local index,history=History.at(now)
+    local production=history.samples[index] and history.samples[index].output*bank.npanels or 0
+    local state="standby"
+    if not bank.on then state="bank_off"
+    elseif not b.failsafe then state="no_failsafe"
+    elseif b.fuel<=0 then state="no_fuel"
+    elseif b.condition<=20 and not b.ison then state="low_condition"
+    elseif bank.ISA_energyConfig.gridEligible==true and Grid.exists() then state="grid"
+    elseif b.ison then state=production>0 and bank.charge<bank.maxcapacity and "running_charging" or "running_waiting" end
+    local capacity=bank.maxcapacity
+    local low=math.min(bank.drain,capacity*0.25)
+    local high=math.min(bank.drain*2,capacity*0.75)
+    bank.ISA_backupStatus={state=state,failsafe=b.failsafe or false,managed=true,
+        fuelPercent=b.fuel*10,condition=b.condition,
+        startPercent=capacity>0 and low/capacity*100 or 0,stopPercent=capacity>0 and high/capacity*100 or 0,
+        hour=now}
+    bank.conGenerator.ison=b.ison
 end
 function Native.update(generator,now,allowance,deadline,existingBank,source)
     local bank=existingBank or systemBank(generator)
@@ -127,6 +160,8 @@ function Native.update(generator,now,allowance,deadline,existingBank,source)
         bank.ISA_energyConfig=cached
     end
     if cached.indoors==nil and generator then cached.indoors=not generator:getSquare():isOutside() end
+    local localGrid=generator and Grid.eligible(generator:getSquare())
+    if cached.gridEligible==nil and generator then cached.gridEligible=localGrid end
     if not source then source=bank:getConGenerator() end
     if not bank.conGenerator then bank.ISA_backup=nil; source=nil
     elseif source and (bank.conGenerator.x~=source:getX() or bank.conGenerator.y~=source:getY() or bank.conGenerator.z~=source:getZ()) then
@@ -149,6 +184,9 @@ function Native.update(generator,now,allowance,deadline,existingBank,source)
             bank.ISA_pendingInventory=nil
         end
         bank.charge=math.max(0,math.min(bank.maxcapacity,bank.charge))
+        local controlGrid=cached.gridEligible==true
+        if generator then controlGrid=localGrid end
+        Model.control(bank,now,bank.drain,controlGrid and Grid.exists())
         local b=bank.ISA_backup
         if b then
             if source then
@@ -164,17 +202,22 @@ function Native.update(generator,now,allowance,deadline,existingBank,source)
             bank:updateGenerator()
             bank:updateSprite()
         end
-        bank.ISA_energyConfig={on=bank.on,drain=bank.drain,npanels=bank.npanels,maxcapacity=bank.maxcapacity,indoors=cached.indoors}
-        Model.transition(bank,now,(cached.indoors and getWorld():isHydroPowerOn())
+        bank.ISA_energyConfig={on=bank.on,drain=bank.drain,npanels=bank.npanels,maxcapacity=bank.maxcapacity,
+            indoors=cached.indoors,gridEligible=cached.gridEligible}
+        if generator then bank.ISA_energyConfig.gridEligible=localGrid end
+        Native.publishBackupStatus(bank,now)
+        local mains=bank.ISA_energyConfig.gridEligible==true and Grid.exists()
+        Model.transition(bank,now,mains
             or (b and b.ison and b.fuel>0 and b.condition>0) or (bank.on and bank.charge>0) or false)
         bank:saveData(true)
         Native.metrics.broadcasts=Native.metrics.broadcasts+1
         Native.metrics.maxFinalizeMs=math.max(Native.metrics.maxFinalizeMs or 0,getTimestampMs()-finalizeStarted)
         Native.metrics.maxCatchupMs=math.max(Native.metrics.maxCatchupMs or 0,getTimestampMs()-(bank._ISA_backlogSince or finalizeStarted))
         bank._ISA_backlogSince=nil
-        ISA.debugLog("Power bank settled x=%s y=%s z=%s hour=%.3f charge=%.3f capacity=%.3f backupFuel=%.3f supply=%s",
+        ISA.debugLog("Power bank settled x=%s y=%s z=%s hour=%.3f charge=%.3f capacity=%.3f backupFuel=%.3f supply=%s on=%s grid=%s gridEligible=%s drain=%.3f backupOn=%s simOn=%s simDrain=%.3f",
             tostring(bank.x),tostring(bank.y),tostring(bank.z),now,bank.charge,bank.maxcapacity,
-            b and b.fuel or 0,tostring(bank.ISA_supply.powered))
+            b and b.fuel or 0,tostring(bank.ISA_supply.powered),tostring(bank.on),tostring(mains),
+            tostring(bank.ISA_energyConfig.gridEligible),bank.drain,tostring(b and b.ison or false),tostring(cached.on),cached.drain)
     else bank:saveData(false) end
     if generator then
         if processed==now then generator:completeUpdate(processed,SandboxVars.ISA.ChargeFreq==1 and 1/6 or 1)
@@ -254,7 +297,7 @@ function Native.processQueue()
                 bank._ISA_processing=nil
                 Native.metrics.failures=Native.metrics.failures+1
                 if generator then generator:failScheduledUpdate() end
-                if source then source:setActivated(false) end
+                if source then PowerBankBackup.stop(source) end
                 print('[ISA] Budgeted power update failed: '..tostring(processed))
             end
         else

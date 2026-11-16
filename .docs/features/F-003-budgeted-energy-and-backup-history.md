@@ -2,6 +2,10 @@
 
 ID F-003. Created 2026-11-15. Status implemented; isolated validation and exact-JAR compilation complete; multiplayer and live timing validation pending.
 
+Subsequent behavior update: [F-004](F-004-automatic-backup-control-and-status.md) adds exclusive on/off authority, stop-before-disconnect and runtime presentation. It supersedes the original manual/independently-running backup behavior below; a managed source now stops when its bank is off or the failsafe is missing.
+
+Subsequent correction: [I-004](../issues/I-004-indoor-bank-false-mains-power.md) replaces the old global hydro flag with current B42 grid policy, local mains eligibility and historical shutoff splitting. Indoor placement alone does not exempt a bank from consumption.
+
 ## Scheduling and synchronization
 
 `NativeSimulation` owns two FIFO queues, with one entry per bank. Native Java callbacks enqueue/defer rather than integrating history inline. OnTick drains due work only; it does not scan the registry, panels, appliances or food. Two of every three service choices prefer ordinary work and one prefers banks more than 24 game hours behind, with work-conserving fallback. FIFO rotation and deduplication prevent a single long history monopolizing service.

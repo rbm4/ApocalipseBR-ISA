@@ -285,4 +285,8 @@ function WorldUtil.getGeneratorsInArea(square, radius, zLevels, distance)
     return all
 end
 
+function WorldUtil.isManagedBackup(generator)
+    return generator and generator:getModData().ApocBRISABackupOwner ~= nil or false
+end
+
 ISA.WorldUtil = WorldUtil

@@ -21,6 +21,13 @@ class NativeSimulationTest(unittest.TestCase):
             now = 0
             function getTimestampMs() return 0 end
             function getWorld() return {isHydroPowerOn=function() return false end} end
+            gridDay=-1
+            timeSinceApo=1
+            function getSandboxOptions() return {
+                doesPowerGridExist=function() return now/24+(timeSinceApo-1)*30<=gridDay end,
+                getElecShutModifier=function() return gridDay end,
+                getTimeSinceApo=function() return timeSinceApo end
+            } end
             function ZombRand() return 1 end
             PowerBankBackup={enable=function() end}
             function getGameTime() return { getWorldAgeHours = function() return now end } end
@@ -50,6 +57,8 @@ class NativeSimulationTest(unittest.TestCase):
         isa.PBSystem_Server = system
         self.lua.globals().ISA = isa
         self.lua.globals().package.loaded['ImmersiveSolarArrays/Utilities'] = isa
+        grid=ROOT/'ApocalipseBR-ISA/42/media/lua/shared/ImmersiveSolarArrays/GridPower.lua'
+        self.lua.globals().package.loaded['ImmersiveSolarArrays/GridPower']=self.lua.execute(grid.read_text(encoding='utf-8'))
         for name in ('ProductionHistory','EnergyModel'):
             path=SOURCE.parent / (name+'.lua')
             module=self.lua.execute(path.read_text(encoding='utf-8'))
@@ -177,7 +186,7 @@ class NativeSimulationTest(unittest.TestCase):
             function bank:saveData() saved=saved+1 end
             function ISA.PBSystem_Server:getLuaObjectOnSquare() return bank end
             generator = {
-                getSquare = function() return {} end,
+                getSquare = function() return {isOutside=function() return true end} end,
                 getContainer = function() return {} end,
                 prepareSimulationUpdate=function() end,
                 completeUpdate = function(self, through, interval)

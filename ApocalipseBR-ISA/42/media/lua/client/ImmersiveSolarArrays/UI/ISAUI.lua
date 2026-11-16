@@ -57,8 +57,9 @@ function UI.onDisconnectBackup(player, generator, luaPb)
         else
             local pb = ISA.PBSystem_Server:getLuaObjectAt(luaPb.x, luaPb.y, luaPb.z)
             if pb then
-                pb:disconnectBackupGenerator(generator)
-                pb:saveData(true)
+                ISA.PBSystem_Server.Commands.plugGenerator(character,{plug=false,
+                    gen={x=generator:getX(),y=generator:getY(),z=generator:getZ()},
+                    pbList={{x=luaPb.x,y=luaPb.y,z=luaPb.z}}})
             end
         end
     end
@@ -99,8 +100,36 @@ function UI.OnPreFillWorldObjectContextMenu(player, context, worldobjects, test)
     end
 end
 
+function UI.lockManagedGeneratorOptions(context)
+    local remaining=256
+    local function visit(menu,depth)
+        if not menu or depth>8 then return end
+        for _,option in ipairs(menu.options or {}) do
+            remaining=remaining-1
+            if remaining<0 then return end
+            local wrapped=option.onSelect==menu.onGetUpAndThen
+            local callback=wrapped and option.param1 or option.onSelect
+            local generator
+            if callback==ISWorldObjectContextMenu.onActivateGenerator then
+                generator=wrapped and option.param4 or option.param2
+            elseif callback==ISWorldObjectContextMenu.onPlugGenerator then
+                generator=wrapped and option.param3 or option.param1
+            end
+            if generator and ISA.WorldUtil.isManagedBackup(generator) then
+                option.notAvailable=true
+                local tooltip=ISWorldObjectContextMenu.addToolTip()
+                tooltip.description=getText("IGUI_ISABackup_ControlHint")
+                option.toolTip=tooltip
+            end
+            if option.subOption then visit(menu:getSubMenu(option.subOption),depth+1) end
+        end
+    end
+    visit(context,0)
+end
+
 function UI.OnFillWorldObjectContextMenu(player, context, worldobjects, test)
     if test and ISWorldObjectContextMenu.Test then return true end
+    if not test then UI.lockManagedGeneratorOptions(context) end
     local powerbank = _powerbank
     local panel
     --local panels = {}

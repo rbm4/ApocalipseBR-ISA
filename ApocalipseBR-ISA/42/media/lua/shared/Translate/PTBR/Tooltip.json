@@ -1,5 +1,6 @@
 {
     "Tooltip_ISA_NoPanels": "Nenhum painel",
     "Tooltip_ISA_PanelFar": "Este painel está muito longe",
-    "Tooltip_PowerBank": "Armazena a energia dos painéis solares em baterias e alimenta os dispositivos elétricos próximos."
+    "Tooltip_PowerBank": "Armazena a energia dos painéis solares em baterias e alimenta os dispositivos elétricos próximos.",
+    "Tooltip_ISA_SolarFailsafe": "Deve ser instalado no mesmo quadrado (tile) do gerador de reserva conectado a um Banco de Baterias para permitir o controle automático do gerador."
 }

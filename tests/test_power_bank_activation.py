@@ -52,6 +52,7 @@ class PowerBankActivationTest(unittest.TestCase):
             function ISBaseTimedAction:derive() local child={}; setmetatable(child,{__index=self}); return child end
             function ISBaseTimedAction.new(class,actor) return setmetatable({character=actor},{__index=class}) end
         """)
+        self.lua.globals().package.loaded['ImmersiveSolarArrays/GridPower']=self.lua.execute((ROOT/'shared/ImmersiveSolarArrays/GridPower.lua').read_text(encoding='utf-8'))
         self.lua.execute((ROOT / 'shared/ImmersiveSolarArrays/WorldUtilities.lua').read_text(encoding='utf-8'))
         shared = self.lua.execute((ROOT / 'shared/ImmersiveSolarArrays/PowerBankSystem_Shared.lua').read_text(encoding='utf-8'))
         self.lua.globals().package.loaded['ImmersiveSolarArrays/PowerBankSystem_Shared'] = shared
@@ -112,6 +113,8 @@ class PowerBankActivationTest(unittest.TestCase):
             function system:getMaxSolarOutput() return 0 end
         """)
         source = ROOT / 'client/ImmersiveSolarArrays/UI/ISAStatusWindowDetailsView.lua'
+        status=self.lua.execute((ROOT/'shared/ImmersiveSolarArrays/BackupStatus.lua').read_text(encoding='utf-8'))
+        self.lua.globals().package.loaded['ImmersiveSolarArrays/BackupStatus']=status
         self.lua.execute(source.read_text(encoding='utf-8'))
 
     def test_details_render_at_level_zero_and_report_actual_distance(self):

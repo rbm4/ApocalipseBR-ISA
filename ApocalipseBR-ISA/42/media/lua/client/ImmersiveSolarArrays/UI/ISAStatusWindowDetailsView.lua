@@ -1,6 +1,7 @@
 require "ISUI/ISPanelJoypad"
 require "ImmersiveSolarArrays/UI/ISAUI"
 local isa = require "ImmersiveSolarArrays/Utilities"
+local BackupStatus = require "ImmersiveSolarArrays/BackupStatus"
 
 local rgbGood, rgbBad = isa.UI.rgbGood, isa.UI.rgbBad
 
@@ -89,15 +90,23 @@ function ISAWindowDetails:render()
         textY = textY + fontHeightSm
         self:drawText(getText("IGUI_ISAWindow_Details_ElectricityExternal"), textX, textY, 1, 1, 1, 1, UIFont.Medium)
         textY = textY + fontHeightMed + 5
-        borderY, borderH = textY-3, fontHeightSm * 2 + 6
+        borderY, borderH = textY-3, fontHeightSm * (pb.conGenerator and 7 or 2) + 6
         self:drawRect(borderX, borderY, borderW, borderH, 0.7, 0.2, 0.2, 0.2)
         self:drawRectBorder(borderX, borderY, borderW, borderH, 1, 0.3, 0.3, 0.3)
 
         self:drawLineB(pb.conGenerator,"IGUI_ISAWindow_Details_conGenerator",textY)
 
         textY = textY + fontHeightSm
-        self:drawLineB(pb.conGenerator and isa.WorldUtil.findOnSquare(getSquare(pb.conGenerator.x,pb.conGenerator.y,pb.conGenerator.z), "solarmod_tileset_01_15"),"IGUI_ISAWindow_Details_Failsafe",textY)
+        local stateKey,runtime=BackupStatus.get(pb)
+        self:drawLineB(runtime and runtime.failsafe,"IGUI_ISAWindow_Details_Failsafe",textY)
         textY = textY + fontHeightSm
+        if pb.conGenerator then
+            for _,text in ipairs({getText("IGUI_ISABackup_State"),getText(stateKey),
+                BackupStatus.thresholdText(runtime),BackupStatus.fuelText(runtime),getText("IGUI_ISABackup_ControlHint")}) do
+                self:drawText(text,textX,textY,1,1,1,1,UIFont.Small)
+                textY=textY+fontHeightSm
+            end
+        end
     else
         self.devButton:setVisible(false)
         self:drawText(getText("IGUI_ISAWindow_Details_CantSee"), textX, textY, rgbBad.r, rgbBad.g, rgbBad.b, 1, UIFont.Medium)
@@ -212,6 +221,7 @@ function ISAWindowDetails.measureWidth()
     local max = maxWidthOfVarTexts(varTexts)
     max = math.max(max,maxWidthOfTexts(bTexts) + maxWidthOfTexts({"UI_Yes","UI_No"}))
     max = math.max(max + 20, getTextManager():MeasureStringX(UIFont.Medium, getText("IGUI_ISAWindow_Details_ElectricalDevices")) + getTextManager():MeasureStringX(UIFont.Small, getText("IGUI_ISA_Update")) + 40)
+    max = math.max(max,maxWidthOfTexts({"IGUI_ISABackup_RunningCharging","IGUI_ISABackup_RunningWaiting","IGUI_ISABackup_ControlHint"})+20)
 
     return max
 end

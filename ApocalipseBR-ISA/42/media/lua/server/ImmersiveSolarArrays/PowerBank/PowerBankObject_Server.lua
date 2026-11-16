@@ -6,6 +6,7 @@ if isClient() then return end
 
 require "Map/SGlobalObject"
 local ISA = require "ImmersiveSolarArrays/Utilities"
+local Grid = require "ImmersiveSolarArrays/GridPower"
 local solarscan = require "ImmersiveSolarArrays/PowerBank/SolarScan"
 local sandbox = SandboxVars.ISA
 
@@ -78,7 +79,8 @@ end
 function PowerBank:saveData(transmit)
     if ISA.NativeSimulation and not self._ISA_processing and self.ISA_simulationHour == getGameTime():getWorldAgeHours() then
         self.ISA_energyConfig={on=self.on,drain=self.drain,npanels=self.npanels,maxcapacity=self.maxcapacity,
-            indoors=self.ISA_energyConfig and self.ISA_energyConfig.indoors}
+            indoors=self.ISA_energyConfig and self.ISA_energyConfig.indoors,
+            gridEligible=self.ISA_energyConfig and self.ISA_energyConfig.gridEligible}
     end
     local isoObject = self:getIsoObject()
     if not isoObject then return end
@@ -96,14 +98,9 @@ function PowerBank:shouldDrain(isoPb)
     end
     if self.conGenerator and self.conGenerator.ison then return false end
 
-    local world = getWorld()
-    if world:isHydroPowerOn() then
-        if isoPb then
-            if not isoPb:getSquare():isOutside() then return false end
-        else
-            if world:getMetaGrid():getRoomAt(self.x, self.y, self.z) then return false end
-        end
-    end
+    if isoPb then
+        if Grid.current(isoPb:getSquare()) then return false end
+    elseif self.ISA_energyConfig and self.ISA_energyConfig.gridEligible==true and Grid.exists() then return false end
     return true
 end
 
@@ -463,24 +460,46 @@ function PowerBank:connectBackupGenerator(generator)
     if ISA.NativeSimulation then ISA.NativeSimulation.bindBackup(self,generator) end
     self.lastHour = 0
     self:saveData(true)
+    ISA.debugLog("Backup attached under automatic bank control x=%s y=%s z=%s source=%s,%s,%s",
+        tostring(self.x),tostring(self.y),tostring(self.z),tostring(self.conGenerator.x),tostring(self.conGenerator.y),tostring(self.conGenerator.z))
+    return true
 end
 
 function PowerBank:disconnectBackupGenerator(generator)
+    local link=self.conGenerator
+    if not link then return false end
+    if generator and (generator:getX()~=link.x or generator:getY()~=link.y or generator:getZ()~=link.z) then return false end
+    generator = generator or self:getConGenerator()
     if ISA.nativePowerBanks then
-        generator = generator or self:getConGenerator()
         if generator then
+            if PowerBankBackup.isControlled(generator) then
+                local owner=generator:getISABackupOwner()
+                if owner.x~=self.x or owner.y~=self.y or owner.z~=self.z then
+                    self.conGenerator=false
+                    self.ISA_backup=nil
+                    self.ISA_backupStatus=nil
+                    self:saveData(true)
+                    return true
+                end
+            end
             local state=self.ISA_backup
             if state and PowerBankBackup.isControlled(generator) then
                 -- Never refund fuel already consumed by a persisted partial batch.
                 generator:applyISABackupState(math.min(generator:getFuel(),state.fuel),
-                    math.min(generator:getCondition(),state.condition),generator:isActivated())
+                    math.min(generator:getCondition(),state.condition),false)
             end
             PowerBankBackup.release(generator)
         end
         self.ISA_backup = nil
+    elseif generator then
+        generator:setActivated(false)
     end
     self.conGenerator = false
+    self.ISA_backupStatus=nil
     self:saveData(true)
+    ISA.debugLog("Backup disconnected x=%s y=%s z=%s sourceLoaded=%s; loaded source stopped before release",
+        tostring(self.x),tostring(self.y),tostring(self.z),tostring(generator~=nil))
+    return true
 end
 
 function PowerBank:autoConnectBackup()

@@ -14,7 +14,7 @@ class PowerBudgetTest(unittest.TestCase):
             function ISA.PBSystem_Server:getLuaObjectOnSquare(square) return banks[square.x] end
             function makeBank(x,hour)
                 local b={x=x,y=0,z=0,on=true,drain=2,npanels=1,maxcapacity=100,charge=50,ISA_simulationHour=hour}
-                local square={x=x,isOutside=function() return true end}
+                local square={x=x,isOutside=function() return true end,isNoPower=function() return false end}
                 local g={}
                 function g:getSquare() return square end
                 function g:getObjectIndex() return 0 end
@@ -169,10 +169,10 @@ class PowerBudgetTest(unittest.TestCase):
             now=4
             history.samples={{hour=0,output=0}}
             local b,g=makeBank(1,0)
-            b.charge=8; b.drain=4; b.conGenerator={x=5,y=0,z=0,ison=true}
+            b.charge=2; b.drain=4; b.conGenerator={x=5,y=0,z=0,ison=true}
             b.ISA_backup={fuel=2,condition=100,ison=true,rate=1,availableFrom=0,
                 appliedFuel=2,appliedCondition=100,appliedOn=true,
-                observedFuel=2,observedCondition=100,observedOn=true,observedRate=1,observedFailsafe=false}
+                observedFuel=2,observedCondition=100,observedOn=true,observedRate=1,observedFailsafe=true,failsafe=true}
             b.ISA_energyConfig={on=true,drain=4,npanels=1,maxcapacity=100}
             function b:getIsoObject() return nil end
             local source={fuel=2,condition=100,ison=true,commits=0}
@@ -192,7 +192,7 @@ class PowerBudgetTest(unittest.TestCase):
             end
             function b:getConGenerator() return source end
             PowerBankBackup.claim=function() return true end
-            ISA.WorldUtil={findOnSquare=function() return nil end}
+            ISA.WorldUtil={findOnSquare=function() return {} end}
             ScriptManager={instance={getItem=function() return nil end}}
             Native.requestBackup(source,{x=1,y=0,z=0})
             for i=1,4 do Native.processQueue() end
@@ -231,9 +231,10 @@ class PowerBudgetTest(unittest.TestCase):
 
     def test_grid_supply_stops_failsafe_and_preserves_battery(self):
         self.lua.execute('''
+            gridDay=1
             history.samples={{hour=0,output=0,hydro=true}}
             local b=makeBank(1,0)
-            b.charge=2; b.ISA_energyConfig={indoors=true}
+            b.charge=2; b.ISA_energyConfig={indoors=true,gridEligible=true}
             b.ISA_backup={fuel=3,rate=1,condition=100,ison=true,failsafe=true}
             Native.advance(b,3,2)
             assert(b.charge==2 and b.ISA_backup.fuel==3 and not b.ISA_backup.ison)

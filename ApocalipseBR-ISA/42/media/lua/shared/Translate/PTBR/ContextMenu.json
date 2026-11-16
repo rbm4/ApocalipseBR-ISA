@@ -10,6 +10,6 @@
     "ContextMenu_ISA_Connect_Panel_toolTip_isOutside": "O Painel Solar precisa estar do lado de fora",
     "ContextMenu_ISA_Connect_Panel_NoPowerbank": "Nenhum Banco de Baterias perto deste Painel Solar",
     "ContextMenu_ISA_Backup_Generator": "Gerador de Reserva",
-    "ContextMenu_ISA_Connect_Backup": "Conectar ao Banco de Baterias",
-    "ContextMenu_ISA_Disconnect_Backup": "Desconectar do Banco de Baterias"
+    "ContextMenu_ISA_Connect_Backup": "Conectar Gerador de Reserva",
+    "ContextMenu_ISA_Disconnect_Backup": "Desconectar Gerador de Reserva"
 }

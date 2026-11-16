@@ -1,5 +1,6 @@
 require "ISUI/ISPanelJoypad"
 local isa = require "ImmersiveSolarArrays/Utilities"
+local BackupStatus = require "ImmersiveSolarArrays/BackupStatus"
 
 local ISAWindowsSumaryTab = ISPanelJoypad:derive("ISAWindowsSumaryTab")
 
@@ -220,35 +221,18 @@ function ISAWindowsSumaryTab:render()
 	-- ========================================================
 	-- CARD 3: EMERGENCY POWER & SOLAR FAILSAFE
 	-- ========================================================
-	local c3X, c3Y, c3H = 12, 296, 110
-	self:drawCardBox(c3X, c3Y, cardW, c3H,
-		getText("IGUI_ISASummary_EmergencyTitle"),
-		self.textureCables)
-
-	self:drawStatusBadge(c3X + cardW - 10, c3Y + 5, getText("IGUI_ISASummary_AutoProtection"), 0.90, 0.65, 0.15)
-
-	local hasFailsafe = false
+	local c3X, c3Y, c3H = 12, 296, 128
+	self:drawCardBox(c3X,c3Y,cardW,c3H,getText("IGUI_ISASummary_EmergencyTitle"),self.textureCables)
+	local stateKey,runtime=BackupStatus.get(pb)
 	if pb.conGenerator then
-		local genSq = getSquare(pb.conGenerator.x, pb.conGenerator.y, pb.conGenerator.z)
-		if genSq and isa.WorldUtil.findOnSquare(genSq, "solarmod_tileset_01_15") then
-			hasFailsafe = true
-		end
+		self:drawStatusBadge(c3X+cardW-10,c3Y+5,getText("IGUI_ISABackup_Managed"),0.90,0.65,0.15)
 	end
-
-	local c3Y1 = c3Y + 38
-	local c3Y2 = c3Y + 68
-
-	local genText = pb.conGenerator and getText("IGUI_ISASummary_GenConnectedReady") or getText("IGUI_ISASummary_GenNoneConnected")
-	local genR, genG, genB = pb.conGenerator and 0.2 or 0.6, pb.conGenerator and 0.85 or 0.6, pb.conGenerator and 0.35 or 0.6
-	self:drawText(getText("IGUI_ISASummary_BackupGenerator") .. "  " .. genText, leftColX, c3Y1, genR, genG, genB, 1, UIFont.Small)
-
-	local failsafeText = hasFailsafe and getText("IGUI_ISASummary_FailsafeActive") or (pb.conGenerator and getText("IGUI_ISASummary_FailsafeInactiveNoFS") or getText("IGUI_ISASummary_FailsafeInactive"))
-	local fsR, fsG, fsB = hasFailsafe and 0.2 or 0.6, hasFailsafe and 0.85 or 0.6, hasFailsafe and 0.35 or 0.6
-	self:drawText(getText("IGUI_ISASummary_FailsafeState") .. "  " .. failsafeText, rightColX, c3Y1, fsR, fsG, fsB, 1, UIFont.Small)
-
-	local locText = pb.conGenerator and string.format("(%d, %d, %d)", pb.conGenerator.x, pb.conGenerator.y, pb.conGenerator.z) or "—"
-	self:drawText(getText("IGUI_ISASummary_LocationCoords") .. "  " .. locText, leftColX, c3Y2, 0.8, 0.85, 0.9, 1, UIFont.Small)
-	self:drawText(getText("IGUI_ISASummary_EmergencyAuto") .. "  " .. (pb.conGenerator and getText("IGUI_ISASummary_ReadyOnEmpty") or "—"), rightColX, c3Y2, 0.8, 0.85, 0.9, 1, UIFont.Small)
+	self:drawText(getText(stateKey),leftColX,c3Y+38,0.9,0.95,1,1,UIFont.Small)
+	if pb.conGenerator then
+		self:drawText(BackupStatus.thresholdText(runtime),leftColX,c3Y+58,0.8,0.85,0.9,1,UIFont.Small)
+		self:drawText(BackupStatus.fuelText(runtime),leftColX,c3Y+78,0.8,0.85,0.9,1,UIFont.Small)
+		self:drawText(getText("IGUI_ISABackup_ControlHint"),leftColX,c3Y+98,0.8,0.85,0.9,1,UIFont.Small)
+	end
 end
 
 function ISAWindowsSumaryTab:new(x, y, width, height)

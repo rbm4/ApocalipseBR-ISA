@@ -1,4 +1,5 @@
 local ISA = require "ImmersiveSolarArrays/Utilities"
+local Grid = require "ImmersiveSolarArrays/GridPower"
 require "Map/CGlobalObject"
 
 ---@class PowerBankObject_Client : CGlobalObject
@@ -29,15 +30,14 @@ function PowerBank:fromModData(modData)
     self.panels = modData["panels"] or {}
     self.lastHour = modData["lastHour"] or 0
     self.conGenerator = modData["conGenerator"]
+    self.ISA_backupStatus = modData["ISA_backupStatus"]
 end
 
 function PowerBank:shouldDrain()
     local square = self:getSquare()
     if not self.on then return false end
     if self.conGenerator and self.conGenerator.ison then return false end
-    if getWorld():isHydroPowerOn() then
-        if square and not square:isOutside() then return false end
-    end
+    if Grid.current(square) then return false end
     return true
 end
 

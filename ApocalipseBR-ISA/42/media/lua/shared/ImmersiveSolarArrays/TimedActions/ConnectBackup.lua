@@ -123,10 +123,9 @@ function ISA_ConnectBackup:complete()
         return false
     end
 
-    pb:connectBackupGenerator(self.generator)
-    pb:saveData(true)
-    self.generator:transmitModData()
-    return true
+    return ISA.PBSystem_Server.Commands.plugGenerator(self.character,{plug=true,
+        gen={x=self.generator:getX(),y=self.generator:getY(),z=self.generator:getZ()},
+        pbList={{x=self.pbX,y=self.pbY,z=self.pbZ}}})
 end
 
 ISA.ConnectBackup = ISA_ConnectBackup

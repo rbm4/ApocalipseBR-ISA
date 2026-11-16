@@ -18,7 +18,7 @@ function PBSystem:new()
 end
 
 --called in SGlobalObjectSystem:new(name)
-PBSystem.savedObjectModData = { 'on', 'batteries', 'charge', 'maxcapacity', 'drain', 'npanels', 'panels', "lastHour", "conGenerator", "ISA_simulationHour", "ISA_energyConfig", "ISA_backup", "ISA_supply", "ISA_historyLostUntil", "ISA_pendingInventory"}
+PBSystem.savedObjectModData = { 'on', 'batteries', 'charge', 'maxcapacity', 'drain', 'npanels', 'panels', "lastHour", "conGenerator", "ISA_simulationHour", "ISA_energyConfig", "ISA_backup", "ISA_supply", "ISA_historyLostUntil", "ISA_pendingInventory", "ISA_backupStatus"}
 function PBSystem:initSystem()
     -- set the instance for easy access
     ISA.PBSystem_Server = self
@@ -240,6 +240,7 @@ end
 ---@param generator IsoGenerator
 ---@param activate boolean
 function PBSystem:onActivateGenerator(character, generator, activate)
+    if ISA.WorldUtil.isManagedBackup(generator) then return false end
     local x, y, z = generator:getX(), generator:getY(), generator:getZ()
     for i = 1, self:getLuaObjectCount() do
         local pb = self:getLuaObjectByIndex(i)

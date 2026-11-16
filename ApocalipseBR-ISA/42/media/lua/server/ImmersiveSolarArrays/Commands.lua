@@ -13,19 +13,9 @@ Events.OnClientCommand.Add(function(module, command, player, args)
     if module ~= "ISA" then return end
 
     if command == "PlugBackupGenerator" then
-        local pb = ISA.PBSystem_Server:getLuaObjectAt(args.pbX, args.pbY, args.pbZ)
-        if pb then
-            local square = getSquare(args.genX, args.genY, args.genZ)
-            local generator = square and square:getGenerator()
-            if generator then
-                if args.plug then
-                    pb:connectBackupGenerator(generator)
-                else
-                    pb:disconnectBackupGenerator(generator)
-                end
-                pb:saveData(true)
-            end
-        end
+        if type(args)~="table" or not ISA.PBSystem_Server then return end
+        ISA.PBSystem_Server.Commands.plugGenerator(player,{gen={x=args.genX,y=args.genY,z=args.genZ},
+            pbList={{x=args.pbX,y=args.pbY,z=args.pbZ}},plug=args.plug})
     end
 
     if command == "DebugPrint" then

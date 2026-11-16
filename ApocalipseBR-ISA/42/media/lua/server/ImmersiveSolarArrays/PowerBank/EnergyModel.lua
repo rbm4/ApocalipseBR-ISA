@@ -36,12 +36,37 @@ function Model.transition(bank, hour, powered)
     bank.ISA_supply = h
     if h.powered == powered then return end
     h.powered = powered
+    local previous=h[h.last]
+    if previous and previous.hour==hour then
+        previous.powered=powered
+        if h.last>h.first and h[h.last-1].powered==powered then h[h.last]=nil; h.last=h.last-1 end
+        return
+    end
     h.last = h.last + 1
     h[h.last] = {hour=hour, powered=powered}
     if h.last - h.first >= 256 then
         h[h.first] = nil
         h.first = h.first + 1
     end
+end
+
+function Model.control(bank,start,drain,grid)
+    local b = bank.ISA_backup
+    local demand = bank.on and not grid and drain or 0
+    local available = b and start >= (b.availableFrom or 0)
+    if available then
+        if b.fuel <= EPS or b.condition <= 0 then b.ison = false end
+        if b.managed and (not bank.on or not b.failsafe or grid) then b.ison=false end
+        if b.failsafe and bank.on and grid then b.ison=false end
+        if b.failsafe and bank.on and b.fuel > EPS and b.condition > 0 and demand > 0 then
+            -- Hysteresis prevents infinite switching at one charge threshold.
+            local low = math.min(demand, bank.maxcapacity * 0.25)
+            local high = math.min(demand * 2, bank.maxcapacity * 0.75)
+            if not b.ison and b.condition > 20 and bank.charge <= low + EPS then b.ison = true
+            elseif b.ison and bank.maxcapacity > EPS and bank.charge >= high - EPS then b.ison = false end
+        end
+    end
+    return available
 end
 
 -- One bounded state-machine step. No world calls, physical toggles or item loops.
@@ -52,18 +77,7 @@ function Model.step(bank, start, finish, output, drain, grid)
     if events and events.first<=events.last then finish=math.min(finish,events[events.first].hour) end
     local production = math.max(0, output * bank.npanels)
     local demand = bank.on and not grid and drain or 0
-    local available = b and start >= (b.availableFrom or 0)
-    if available then
-        if b.fuel <= EPS or b.condition <= 0 then b.ison = false end
-        if b.failsafe and bank.on and grid then b.ison=false end
-        if b.failsafe and bank.on and b.fuel > EPS and b.condition > 0 and demand > 0 then
-            -- Hysteresis prevents infinite switching at one charge threshold.
-            local low = math.min(demand, bank.maxcapacity * 0.25)
-            local high = math.min(demand * 2, bank.maxcapacity * 0.75)
-            if not b.ison and b.condition > 20 and bank.charge <= low + EPS then b.ison = true
-            elseif b.ison and bank.maxcapacity > EPS and bank.charge >= high - EPS then b.ison = false end
-        end
-    end
+    local available=Model.control(bank,start,drain,grid)
     local running = available and b.ison
     local rate = production - (running and 0 or demand)
     local stop = finish

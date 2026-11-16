@@ -44,6 +44,7 @@ module Base
             category      = Electrical,
             SkillRequired = Electricity:3,
             xpAward       = Electricity:75,
+            ToolTip       = Tooltip_ISA_SolarFailsafe,
 
             inputs
             {
