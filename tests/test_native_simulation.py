@@ -19,6 +19,10 @@ class NativeSimulationTest(unittest.TestCase):
             package.loaded['ImmersiveSolarArrays/Utilities'] = ISA
             function isClient() return false end
             now = 0
+            function getTimestampMs() return 0 end
+            function getWorld() return {isHydroPowerOn=function() return false end} end
+            function ZombRand() return 1 end
+            PowerBankBackup={enable=function() end}
             function getGameTime() return { getWorldAgeHours = function() return now end } end
             SandboxVars = { ISA = { ChargeFreq = 1 } }
             history = { samples = {} }
@@ -27,11 +31,12 @@ class NativeSimulationTest(unittest.TestCase):
             local function event(name)
                 return { Add = function(fn) subscribed[name] = fn end }
             end
-            Hook = { OnPowerBankUpdate = event('update') }
+            Hook = { OnPowerBankUpdate = event('update'),OnPowerBankBackupUpdate=event('backup') }
             Events = {
                 EveryTenMinutes = event('production'),
                 OnSGlobalObjectSystemInit = event('initial')
             }
+            Events.OnTick=event('queue')
             ISA.PBSystem_Server = { getModifiedSolarOutput = function() return 10 end }
             function isServer() return true end
             IsoPowerBank = {}
@@ -45,6 +50,10 @@ class NativeSimulationTest(unittest.TestCase):
         isa.PBSystem_Server = system
         self.lua.globals().ISA = isa
         self.lua.globals().package.loaded['ImmersiveSolarArrays/Utilities'] = isa
+        for name in ('ProductionHistory','EnergyModel'):
+            path=SOURCE.parent / (name+'.lua')
+            module=self.lua.execute(path.read_text(encoding='utf-8'))
+            self.lua.globals().package.loaded['ImmersiveSolarArrays/PowerBank/'+name]=module
         self.native = self.lua.execute(SOURCE.read_text(encoding="utf-8"))
 
     def test_debug_logging_obeys_live_sandbox_flag(self):
@@ -55,8 +64,7 @@ class NativeSimulationTest(unittest.TestCase):
         self.lua.globals().now = 1
         self.native.recordProduction()
         messages = list(self.lua.globals().logs.values())
-        self.assertTrue(any('Subscribed Hook.OnPowerBankUpdate' in message for message in messages))
-        self.assertTrue(any('Production recorded' in message for message in messages))
+        self.assertTrue(any('Subscribed budgeted' in message for message in messages))
         count = len(messages)
         self.lua.globals().SandboxVars.ISA.Debug = False
         self.lua.globals().now = 2
@@ -69,17 +77,17 @@ class NativeSimulationTest(unittest.TestCase):
         self.assertEqual(len(self.lua.globals().history.samples), 1)
         self.lua.globals().now = 1
         self.native.recordProduction()
-        self.assertEqual(len(self.lua.globals().history.samples), 2)
+        self.assertEqual(len(self.lua.globals().history.samples), 1)
 
     def test_capacity_clamping_applies_at_each_day_night_interval(self):
         self.lua.execute("""
             history.samples = {
                 {hour=0, output=10}, {hour=1, output=0}, {hour=2, output=20}
             }
-            bank = { ISA_simulationHour=0, charge=5, maxcapacity=10, npanels=1 }
+            bank = { ISA_simulationHour=0, charge=5, maxcapacity=10, npanels=1,on=true,drain=6 }
         """)
         bank = self.lua.globals().bank
-        self.assertEqual(self.native.advance(bank, 3, 6), 3)
+        self.assertEqual(self.native.advance(bank, 3, 6)[0], 3)
         self.assertEqual(bank.charge, 10)
         self.assertEqual(bank.ISA_simulationHour, 3)
         self.native.advance(bank, 3, 6)
@@ -91,14 +99,14 @@ class NativeSimulationTest(unittest.TestCase):
             bank = { ISA_simulationHour=0, charge=0, maxcapacity=1000, npanels=1 }
         """)
         bank = self.lua.globals().bank
-        self.assertEqual(self.native.advance(bank, 300, 0), 128)
-        self.assertEqual(self.native.advance(bank, 300, 0), 256)
-        self.assertEqual(self.native.advance(bank, 300, 0), 300)
+        self.assertEqual(self.native.advance(bank, 300, 0)[0], 32)
+        self.assertEqual(self.native.advance(bank, 300, 0)[0], 64)
+        while bank.ISA_simulationHour<300: self.native.advance(bank,300,0)
         self.assertEqual(bank.charge, 300)
 
     def test_start_subscribes_one_callback_and_one_shared_recorder(self):
         self.native.start()
-        self.assertEqual(set(self.lua.globals().subscribed.keys()), {'update', 'production', 'initial'})
+        self.assertEqual(set(self.lua.globals().subscribed.keys()), {'update', 'production', 'initial','queue','backup'})
 
     def test_reconstruction_preserves_the_existing_battery_container(self):
         self.lua.execute("""
@@ -158,7 +166,9 @@ class NativeSimulationTest(unittest.TestCase):
             now = 1
             history.samples = { {hour=0, output=10} }
             writes, applied, saved, acknowledged = 0, 0, 0, 0
-            bank = { ISA_simulationHour=0, charge=0, maxcapacity=20, npanels=1 }
+            bank = { ISA_simulationHour=0, charge=0, maxcapacity=20, npanels=1,on=false,drain=0 }
+            function bank:updateDrain() end
+            function bank:getConGenerator() end
             function bank:shouldDrain() return false end
             function bank:updateBatteries(container, fraction) writes=writes+1; assert(fraction==0.5) end
             function bank:updateGenerator() applied=applied+1 end
@@ -169,6 +179,7 @@ class NativeSimulationTest(unittest.TestCase):
             generator = {
                 getSquare = function() return {} end,
                 getContainer = function() return {} end,
+                prepareSimulationUpdate=function() end,
                 completeUpdate = function(self, through, interval)
                     assert(through==1 and interval==1/6); acknowledged=acknowledged+1
                 end

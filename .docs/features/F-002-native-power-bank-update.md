@@ -2,6 +2,8 @@
 
 ID F-002. Created 2026-11-15. Status implemented foundation, isolated validation complete, multiplayer validation pending.
 
+Updated 2026-11-15: [F-003](F-003-budgeted-energy-and-backup-history.md) supersedes the original per-object scheduling, unbounded retained production history and end-only backup handling described below. The following foundation details retain their original implementation context; F-003 is authoritative for current scheduling and simulation limits.
+
 ## Behavior and ownership
 
 On a dedicated server exposing `IsoPowerBank`, ISA constructs banks as `zombie.apocbr.power.IsoPowerBank`. Construction marks `ApocBRPowerBank=true`. World load, object addition and the sync-repair path resolve ordinary ISA generators through the same conversion helper. Conversion preserves the existing primary battery container, its items and ModData. The server object factory recognizes serialized native generator class ID 22 with base sprite `solarmod_tileset_01_0` and instantiates the subclass before deserialization. The fixed base sprite is part of this reconstruction contract.
@@ -29,6 +31,8 @@ History retention/compaction is pending. Samples currently remain persisted so a
 Vanilla 42.22.2 performs food catch-up in `inventory/types/Food.updateAge(boolean)`, beginning with `updateFreezing` and then elapsed-time aging. Generator activation calls `updateFridgeFreezerItems()` before its coverage changes. This foundation preserves that native loaded-food boundary.
 
 Historical off/on interval replay and a scoped food-aging callback remain a separate implementation step. Current production samples and the bank timestamp do not provide a food-facing power-outage timeline. A broad hook invoked for every ordinary food update would add pressure to unrelated food, so its dispatch needs an indexed power-bank relevance check and an explicit handled/result contract. Food catch-up remains vanilla in this phase.
+
+The [food source investigation](../reports/R-002-food-power-history-catch-up.md) records item-before-generator update ordering, frozen-state semantics and stock-client synchronization requirements for that next step.
 
 ## Sources and validation
 

@@ -24,6 +24,7 @@ function ISAWindowDetails:setVisible(visible)
     ISPanelJoypad.setVisible(self,visible)
     if visible then
         self:setWidthAndParentWidth(self.width)
+        self:refreshLocalDevices()
     end
 end
 
@@ -135,9 +136,24 @@ function ISAWindowDetails:drawLineB(isTrue,igui,y)
     end
 end
 
+function ISAWindowDetails:refreshLocalDevices()
+    local window = self.parent and self.parent.parent
+    local bank = window and window.luaPB
+    local generator = bank and bank:getIsoObject()
+    if not generator then return end
+    generator:setSurroundingElectricity()
+    bank:updateFromIsoObject()
+    self._cachedGenInfo = nil
+    isa.debugLog("Device list refreshed x=%s y=%s z=%s devices=%s",
+        tostring(bank.x), tostring(bank.y), tostring(bank.z), tostring(generator:getItemsPowered()))
+end
+
 function ISAWindowDetails:updateDevices()
-    local luapb = self.parent.parent.luaPB
-    luapb.luaSystem:sendCommand(self.parent.parent.playerObj,"activatePowerbank", { pb = { x = luapb.x, y = luapb.y, z = luapb.z }, activate = luapb.on })
+    local window = self.parent.parent
+    local bank = window.luaPB
+    if not bank or not bank:getIsoObject() then return end
+    self:refreshLocalDevices()
+    bank.luaSystem:sendCommand(window.playerObj, "refreshPowerbank", { x = bank.x, y = bank.y, z = bank.z })
 end
 
 function ISAWindowDetails:getDebugLineForPlayerSquareBackup()

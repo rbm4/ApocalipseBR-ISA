@@ -76,6 +76,10 @@ function PowerBank:toModData(modData)
 end
 
 function PowerBank:saveData(transmit)
+    if ISA.NativeSimulation and not self._ISA_processing and self.ISA_simulationHour == getGameTime():getWorldAgeHours() then
+        self.ISA_energyConfig={on=self.on,drain=self.drain,npanels=self.npanels,maxcapacity=self.maxcapacity,
+            indoors=self.ISA_energyConfig and self.ISA_energyConfig.indoors}
+    end
     local isoObject = self:getIsoObject()
     if not isoObject then return end
     self:toModData(isoObject:getModData())
@@ -444,16 +448,37 @@ function PowerBank:fixIndex()
 end
 
 function PowerBank:connectBackupGenerator(generator)
+    if self.conGenerator and self.conGenerator.x==generator:getX() and self.conGenerator.y==generator:getY() and self.conGenerator.z==generator:getZ() then return true end
+    if ISA.nativePowerBanks and not PowerBankBackup.claim(generator,{x=self.x,y=self.y,z=self.z}) then
+        ISA.debugLog("Backup connection rejected: generator already owned or managed")
+        return false
+    end
+    if self.conGenerator then self:disconnectBackupGenerator() end
     self.conGenerator = {}
     self.conGenerator.x = generator:getX()
     self.conGenerator.y = generator:getY()
     self.conGenerator.z = generator:getZ()
     self.conGenerator.ison = generator:isActivated()
+    self.ISA_backup = nil
+    if ISA.NativeSimulation then ISA.NativeSimulation.bindBackup(self,generator) end
     self.lastHour = 0
     self:saveData(true)
 end
 
 function PowerBank:disconnectBackupGenerator(generator)
+    if ISA.nativePowerBanks then
+        generator = generator or self:getConGenerator()
+        if generator then
+            local state=self.ISA_backup
+            if state and PowerBankBackup.isControlled(generator) then
+                -- Never refund fuel already consumed by a persisted partial batch.
+                generator:applyISABackupState(math.min(generator:getFuel(),state.fuel),
+                    math.min(generator:getCondition(),state.condition),generator:isActivated())
+            end
+            PowerBankBackup.release(generator)
+        end
+        self.ISA_backup = nil
+    end
     self.conGenerator = false
     self:saveData(true)
 end
@@ -491,6 +516,7 @@ function PowerBank:getConGenerator()
 end
 
 function PowerBank:updateConGenerator()
+    if ISA.nativePowerBanks then return end
     local currentHour = math.floor(getGameTime():getWorldAgeHours())
     if self.lastHour == currentHour then return end
     local conGenerator,square = self:getConGenerator()

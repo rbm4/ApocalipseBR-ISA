@@ -9,6 +9,8 @@ Updated: **2026-11-15**. Working conventions: [AGENT.md](../AGENT.md).
 | ID | Document | Status | Date |
 |---|---|---|---|
 | R-001 | [Dependency removal and performance refactor](reports/R-001-dependency-removal-and-hotspot-refactor.md) | Loot decision implemented by F-001; remaining hotspots proposed | 2026-11-15 |
+| R-002 | [Food catch-up across power-bank outages](reports/R-002-food-power-history-catch-up.md) | Source investigation complete; hook/replay proposed | 2026-11-15 |
+| R-003 | [Catch-up budgets, backup transitions and food cost](reports/R-003-catch-up-budgets-and-food-cost.md) | Pre-change audit; energy proposals implemented by F-003; food replay deferred | 2026-11-15 |
 
 ## Issues
 
@@ -16,6 +18,7 @@ Updated: **2026-11-15**. Working conventions: [AGENT.md](../AGENT.md).
 |---|---|---|---|
 | I-001 | [Build 42.22.2 translation lookups](issues/I-001-b42222-translation-lookups.md) | Implemented, static validation complete, in-game validation pending | 2026-11-15 |
 | I-002 | [Bank status proximity and activation diagnostics](issues/I-002-bank-status-and-activation.md) | Correction implemented; isolated validation complete; live retest pending | 2026-11-15 |
+| I-003 | [Details device-list refresh](issues/I-003-device-list-refresh.md) | Correction implemented; isolated checks complete; multiplayer retest pending | 2026-11-15 |
 
 See [issue record conventions](issues/README.md). R-001 contains additional findings to extract when taking them into implementation.
 
@@ -25,6 +28,7 @@ See [issue record conventions](issues/README.md). R-001 contains additional find
 |---|---|---|---|
 | F-001 | [Native loot distributions](features/F-001-native-loot-distributions.md) | Implemented; Lua integration/build checked; in-game validation pending | 2026-11-15 |
 | F-002 | [Native power-bank update callback](features/F-002-native-power-bank-update.md) | Implemented foundation; isolated checks complete; multiplayer and food-history integration pending | 2026-11-15 |
+| F-003 | [Budgeted energy, backup ownership and retained history](features/F-003-budgeted-energy-and-backup-history.md) | Implemented; isolated checks complete; multiplayer/timing validation pending | 2026-11-15 |
 
 See [feature record conventions](features/README.md). F-001 supersedes R-001's deferred-spawn queue/migration proposal. The other hotspot refactors remain pending.
 

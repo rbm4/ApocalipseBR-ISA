@@ -82,7 +82,21 @@ class PowerBankActivationTest(unittest.TestCase):
             assert(not bank.on and not generator.active)
         """)
 
-    def test_details_render_at_level_zero_and_report_actual_distance(self):
+    def test_native_activation_is_queued_without_running_inline_catchup(self):
+        self.lua.execute('''
+            local pending
+            ISA.NativeSimulation={ensureCurrent=function() return false end,
+                queueCommand=function(bank,name,player,args) pending={name=name,args=args} end}
+            generator.update=function() error('Inline simulation is forbidden') end
+            assert(system:setBankEnabled(character,bank,true))
+            assert(not bank.on and pending.name=='activatePowerbank' and pending.args.activate)
+            bank.ISA_simulationHour=10
+            ISA.NativeSimulation.ensureCurrent=function() return true end
+            assert(system:setBankEnabled(character,bank,true))
+            assert(bank.on and generator.active)
+        ''')
+
+    def load_details_view(self):
         self.lua.execute("""
             package.loaded['ISUI/ISPanelJoypad']=true
             package.loaded['ImmersiveSolarArrays/UI/ISAUI']=true
@@ -99,6 +113,9 @@ class PowerBankActivationTest(unittest.TestCase):
         """)
         source = ROOT / 'client/ImmersiveSolarArrays/UI/ISAStatusWindowDetailsView.lua'
         self.lua.execute(source.read_text(encoding='utf-8'))
+
+    def test_details_render_at_level_zero_and_report_actual_distance(self):
+        self.load_details_view()
         self.lua.execute("""
             local view=setmetatable({width=400,parent={parent={luaPB=bank,playerObj=character}},
                 devButton={setVisible=function() end},drawn={}}, {__index=ISA.StatusWindowDetailsView})
@@ -113,6 +130,61 @@ class PowerBankActivationTest(unittest.TestCase):
             character.x=10; view.drawn={}
             view:render()
             assert(view.drawn.IGUI_ISAWindow_Details_CantSee)
+        """)
+
+    def test_update_button_refreshes_local_devices_and_sends_refresh_request(self):
+        self.load_details_view()
+        self.lua.execute("""
+            local refreshes,requests=0,0
+            bank.on=true; generator.active=true
+            function generator:setSurroundingElectricity() refreshes=refreshes+1 end
+            function generator:getItemsPowered() return 'Fridge' end
+            function system:sendCommand(player,command,args)
+                assert(command=='refreshPowerbank' and player==character)
+                assert(args.x==0 and args.y==0 and args.z==0 and args.activate==nil)
+                requests=requests+1
+            end
+            local view=setmetatable({width=400,parent={parent={luaPB=bank,playerObj=character}},
+                _cachedGenInfo=1}, {__index=ISA.StatusWindowDetailsView})
+            view:updateDevices()
+            assert(refreshes==1 and requests==1 and view._cachedGenInfo==nil)
+            assert(bank.on and generator.active)
+            function ISPanelJoypad.setVisible() end
+            function view:setWidthAndParentWidth() end
+            view:setVisible(true)
+            assert(refreshes==2 and requests==1)
+        """)
+
+    def test_server_refresh_recalculates_devices_without_switching_and_is_throttled(self):
+        self.lua.execute("""
+            system.instance=system
+            package.loaded['ImmersiveSolarArrays/PowerBank/PowerBankSystem_Server']=system
+            nowMs=1000
+            function getTimestampMs() return nowMs end
+            refreshes=0; saved=0
+            bank.on=true; generator.active=true
+            function generator:setSurroundingElectricity() refreshes=refreshes+1 end
+            function generator:getItemsPowered() return 'Fridge' end
+            function bank:updateDrain() self.drain=42 end
+            function bank:saveData() saved=saved+1 end
+        """)
+        source = ROOT / 'server/ImmersiveSolarArrays/PowerBank/PowerBankSystem_Commands.lua'
+        self.lua.execute(source.read_text(encoding='utf-8'))
+        self.lua.execute("""
+            local args={x=0,y=0,z=0}
+            assert(system.Commands.refreshPowerbank(character,args))
+            assert(refreshes==1 and saved==1 and bank.drain==42 and bank.on and generator.active)
+            assert(not system.Commands.refreshPowerbank(character,args))
+            assert(refreshes==1)
+            nowMs=2001
+            assert(system.Commands.refreshPowerbank(character,args))
+            assert(refreshes==2)
+            character.x=10; nowMs=4000
+            assert(not system.Commands.refreshPowerbank(character,args))
+            assert(not system.Commands.refreshPowerbank(character,{x=0/0,y=0,z=0}))
+            assert(not system.Commands.refreshPowerbank(character,{x=math.huge,y=0,z=0}))
+            assert(not system.Commands.refreshPowerbank(character,{x=0.5,y=0,z=0}))
+            assert(refreshes==2)
         """)
 
     def test_out_of_range_request_cannot_change_bank_state(self):

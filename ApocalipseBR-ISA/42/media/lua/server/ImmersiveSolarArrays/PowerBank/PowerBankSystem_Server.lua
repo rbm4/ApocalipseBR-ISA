@@ -18,7 +18,7 @@ function PBSystem:new()
 end
 
 --called in SGlobalObjectSystem:new(name)
-PBSystem.savedObjectModData = { 'on', 'batteries', 'charge', 'maxcapacity', 'drain', 'npanels', 'panels', "lastHour", "conGenerator", "ISA_simulationHour"}
+PBSystem.savedObjectModData = { 'on', 'batteries', 'charge', 'maxcapacity', 'drain', 'npanels', 'panels', "lastHour", "conGenerator", "ISA_simulationHour", "ISA_energyConfig", "ISA_backup", "ISA_supply", "ISA_historyLostUntil", "ISA_pendingInventory"}
 function PBSystem:initSystem()
     -- set the instance for easy access
     ISA.PBSystem_Server = self
@@ -83,6 +83,7 @@ function PBSystem:OnObjectAboutToBeRemoved(isoObject)
     elseif self:isValidIsoObject(isoObject) then
         local luaObject = self:getLuaObjectOnSquare(isoObject:getSquare())
         if not luaObject then return end
+        if ISA.NativeSimulation and luaObject.conGenerator then luaObject:disconnectBackupGenerator() end
         self:removeLuaObject(luaObject)
         -- self.processRemoveObj:addItem(isoObject)
     elseif isaType == "Panel" then
@@ -111,8 +112,16 @@ function PBSystem:setBankEnabled(player, bank, enabled)
         tostring(bank.x), tostring(bank.y), tostring(bank.z), tostring(enabled), level, bank.charge, bank.maxcapacity)
 
     if ISA.nativePowerBanks then
-        generator:requestSimulationUpdate()
-        generator:update()
+        if ISA.NativeSimulation then
+            if not ISA.NativeSimulation.ensureCurrent(bank) then
+                ISA.NativeSimulation.queueCommand(bank,"activatePowerbank",player,
+                    {pb={x=bank.x,y=bank.y,z=bank.z},activate=enabled})
+                return true
+            end
+        else
+            generator:requestSimulationUpdate()
+            generator:update()
+        end
         local now = getGameTime():getWorldAgeHours()
         if not bank.ISA_simulationHour or bank.ISA_simulationHour < now then
             ISA.debugLog("Activation deferred x=%s y=%s z=%s reason=catch-up-in-progress",
@@ -128,6 +137,7 @@ function PBSystem:setBankEnabled(player, bank, enabled)
     end
 
     bank.on = enabled
+    if bank.ISA_energyConfig then bank.ISA_energyConfig.on=enabled end
     bank.switchchanged = true
     bank:updateDrain()
     bank:updateGenerator()
@@ -258,6 +268,10 @@ function PBSystem:onTransferItem(item, srcParent, dstParent)
 
     if remove then
         local pb = self:getLuaObjectAt(srcParent:getX(), srcParent:getY(), srcParent:getZ())
+        if ISA.NativeSimulation then
+            pb.batteries=math.max(0,pb.batteries-1)
+            ISA.NativeSimulation.inventoryDelta(pb,-charge,-capacity)
+        else
         pb.batteries = pb.batteries - 1
         if pb.batteries > 0 then
             pb.charge = pb.charge - charge
@@ -269,16 +283,22 @@ function PBSystem:onTransferItem(item, srcParent, dstParent)
         pb:updateGenerator()
         pb:updateSprite()
         pb:saveData(true)
+        end
     end
 
     if add then
         local pb = self:getLuaObjectAt(dstParent:getX(), dstParent:getY(), dstParent:getZ())
+        if ISA.NativeSimulation then
+            pb.batteries=pb.batteries+1
+            ISA.NativeSimulation.inventoryDelta(pb,charge,capacity)
+        else
         pb.batteries = pb.batteries + 1
         pb.charge = pb.charge + charge
         pb.maxcapacity = pb.maxcapacity + capacity
         pb:updateGenerator()
         pb:updateSprite()
         pb:saveData(true)
+        end
     end
 end
 
