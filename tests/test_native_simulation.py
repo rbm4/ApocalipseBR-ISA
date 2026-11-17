@@ -176,6 +176,7 @@ class NativeSimulationTest(unittest.TestCase):
             history.samples = { {hour=0, output=10} }
             writes, applied, saved, acknowledged = 0, 0, 0, 0
             bank = { ISA_simulationHour=0, charge=0, maxcapacity=20, npanels=1,on=false,drain=0 }
+            function bank:calculateBatteryStats() end
             function bank:updateDrain() end
             function bank:getConGenerator() end
             function bank:shouldDrain() return false end

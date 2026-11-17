@@ -58,6 +58,7 @@ end
 
 ---called from loadIsoObject function when luaObject exists, triggered by: Events.OnObjectAdded, MapObjects.OnLoadWithSprite
 function PowerBank:stateToIsoObject(isoObject)
+    isoObject:getModData().ISA_pendingInventory=nil
     self:toModData(isoObject:getModData())
     isoObject:transmitModData()
     self:loadGenerator()

@@ -2,7 +2,7 @@
 
 Project: **ApocalipseBR - Immersive Solar Arrays**. Maintainer: **Hypothetic**.
 
-Updated: **2026-11-15**. Working conventions: [AGENT.md](../AGENT.md).
+Updated: **2026-11-16**. Working conventions: [AGENT.md](../AGENT.md).
 
 ## Reports
 
@@ -32,8 +32,9 @@ See [issue record conventions](issues/README.md). R-001 contains additional find
 | F-002 | [Native power-bank update callback](features/F-002-native-power-bank-update.md) | Implemented foundation; isolated checks complete; multiplayer and food-history integration pending | 2026-11-15 |
 | F-003 | [Budgeted energy, backup ownership and retained history](features/F-003-budgeted-energy-and-backup-history.md) | Implemented; isolated checks complete; multiplayer/timing validation pending | 2026-11-15 |
 | F-004 | [Automatic backup control and runtime status](features/F-004-automatic-backup-control-and-status.md) | Implemented; isolated checks complete; multiplayer/UI validation pending | 2026-11-15 |
+| F-005 | [Container-driven battery simulation](features/F-005-container-driven-battery-simulation.md) | Implemented; 56 regression checks pass; live multiplayer validation pending | 2026-11-16 |
 
-See [feature record conventions](features/README.md). F-001 supersedes R-001's deferred-spawn queue/migration proposal. The other hotspot refactors remain pending.
+See [feature record conventions](features/README.md). F-001 supersedes R-001's deferred-spawn queue/migration proposal. F-005 implements inventory command removal with periodic container sampling; other remaining hotspot proposals are tracked in R-001.
 
 ## Reference
 

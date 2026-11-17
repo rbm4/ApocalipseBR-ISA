@@ -55,3 +55,7 @@ The Lua suite passed 36 tests exercising aggregate quotas/fairness, one final br
 Deploy the matching server Java patch and packaged mod together. Clients need the updated Lua/content mod only. Live acceptance must cover bank-only/backup-only/both/neither loaded, restart during partial replay, refuel/repair/disconnect and removal, second-owner rejection, ordinary-generator coexistence, hourly combustion hazards, dense appliance/battery populations and actual scheduler/packet timing. A native finalization overrun is observable but not preemptible by this queue.
 
 See [F-002](F-002-native-power-bank-update.md), [R-003](../reports/R-003-catch-up-budgets-and-food-cost.md), and [the Java contract](../../../apocalipsebr-zomboid-patches/42.22.2/docs/features/2026-11-15-power-bank-lua-update.md).
+
+## Inventory update (2026-11-16)
+
+[F-005](F-005-container-driven-battery-simulation.md) replaces transfer-command inventory deltas with direct server-container sampling in the simulation callback. Its boundary sampling semantics supersede the inventory-delta behavior described above.

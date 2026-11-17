@@ -18,7 +18,7 @@ function PBSystem:new()
 end
 
 --called in SGlobalObjectSystem:new(name)
-PBSystem.savedObjectModData = { 'on', 'batteries', 'charge', 'maxcapacity', 'drain', 'npanels', 'panels', "lastHour", "conGenerator", "ISA_simulationHour", "ISA_energyConfig", "ISA_backup", "ISA_supply", "ISA_historyLostUntil", "ISA_pendingInventory", "ISA_backupStatus"}
+PBSystem.savedObjectModData = { 'on', 'batteries', 'charge', 'maxcapacity', 'drain', 'npanels', 'panels', "lastHour", "conGenerator", "ISA_simulationHour", "ISA_energyConfig", "ISA_backup", "ISA_supply", "ISA_historyLostUntil", "ISA_inventorySampled", "ISA_backupStatus"}
 function PBSystem:initSystem()
     -- set the instance for easy access
     ISA.PBSystem_Server = self
@@ -250,59 +250,6 @@ function PBSystem:onActivateGenerator(character, generator, activate)
     end
 end
 
-function PBSystem:onTransferItem(item, srcParent, dstParent)
-    if not item then return end
-
-    local md = item:getModData()
-    if not md then return end
-
-    local maxCapacity = md.ISA_maxCapacity
-    if not maxCapacity then return end
-
-    local remove = srcParent and ISA.WorldUtil.objectIsType(srcParent, "PowerBank")
-    local add    = dstParent and ISA.WorldUtil.objectIsType(dstParent, "PowerBank")
-
-    if not (remove or add) then return end
-
-    local capacity = maxCapacity * (1 - math.pow((1 - (item:getCondition() / 100)), 6))
-    local charge   = capacity * item:getCurrentUsesFloat()
-
-    if remove then
-        local pb = self:getLuaObjectAt(srcParent:getX(), srcParent:getY(), srcParent:getZ())
-        if ISA.NativeSimulation then
-            pb.batteries=math.max(0,pb.batteries-1)
-            ISA.NativeSimulation.inventoryDelta(pb,-charge,-capacity)
-        else
-        pb.batteries = pb.batteries - 1
-        if pb.batteries > 0 then
-            pb.charge = pb.charge - charge
-            pb.maxcapacity = pb.maxcapacity - capacity
-        else
-            pb.charge = 0
-            pb.maxcapacity = 0
-        end
-        pb:updateGenerator()
-        pb:updateSprite()
-        pb:saveData(true)
-        end
-    end
-
-    if add then
-        local pb = self:getLuaObjectAt(dstParent:getX(), dstParent:getY(), dstParent:getZ())
-        if ISA.NativeSimulation then
-            pb.batteries=pb.batteries+1
-            ISA.NativeSimulation.inventoryDelta(pb,charge,capacity)
-        else
-        pb.batteries = pb.batteries + 1
-        pb.charge = pb.charge + charge
-        pb.maxcapacity = pb.maxcapacity + capacity
-        pb:updateGenerator()
-        pb:updateSprite()
-        pb:saveData(true)
-        end
-    end
-end
-
 function PBSystem.EveryDays()
     local self = PBSystem.instance
     for i = 0, self.system:getObjectCount() - 1 do
@@ -326,6 +273,7 @@ function PBSystem.updatePowerbanks()
         ---@type PowerBankObject_Server
         local pb = self.system:getObjectByIndex(i):getModData()
         local isopb = pb:getIsoObject()
+        if isopb then pb:calculateBatteryStats(isopb:getContainer()) end
         local drain = 0
         if pb:shouldDrain(isopb) then
             pb:updateDrain()

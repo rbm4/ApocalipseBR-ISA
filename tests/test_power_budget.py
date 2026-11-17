@@ -26,6 +26,7 @@ class PowerBudgetTest(unittest.TestCase):
                 function g:getContainer() return {} end
                 function b:getIsoObject() return g end
                 function b:getConGenerator() return nil end
+                function b:calculateBatteryStats() end
                 function b:updateDrain() end
                 function b:updateBatteries() end
                 function b:updateGenerator() end
@@ -127,16 +128,78 @@ class PowerBudgetTest(unittest.TestCase):
             assert(b.charge==0 and b.ISA_backup.fuel==10)
         ''')
 
-    def test_pending_inventory_is_applied_only_at_completed_boundary(self):
+    def test_container_sample_survives_bounded_catchup(self):
         self.lua.execute('''
-            for i=0,100 do history.samples[i+1]={hour=i,output=0} end
+            for i=0,100 do history.samples[i+1]={hour=i,output=1} end
             now=100
             local b,g=makeBank(1,0)
-            Native.inventoryDelta(b,30,50)
+            local reads=0
+            function b:calculateBatteryStats(container)
+                reads=reads+1
+                self.batteries=1; self.maxcapacity=150; self.charge=30
+            end
+            Native.request(g)
             Native.processQueue()
-            assert(b.ISA_pendingInventory and b.maxcapacity==100 and b.broadcasts==0)
+            assert(b.ISA_inventorySampled and b.maxcapacity==150 and b.broadcasts==0)
             for i=1,10 do Native.processQueue() end
-            assert(not b.ISA_pendingInventory and b.maxcapacity==150 and b.charge==30 and b.broadcasts==1)
+            assert(not b.ISA_inventorySampled and reads==1)
+            assert(b.maxcapacity==150 and b.charge==0 and b.broadcasts==1)
+        ''')
+
+    def test_callback_reads_real_battery_stats_then_writes_current_container(self):
+        self.lua.execute('''
+            package.loaded['Map/SGlobalObject']=true
+            package.loaded['ImmersiveSolarArrays/PowerBank/SolarScan']={}
+            SGlobalObject={derive=function() return {} end}
+        ''')
+        source=native_fixture.SOURCE.parent/'PowerBankObject_Server.lua'
+        self.lua.globals().BatteryMethods=self.lua.execute(source.read_text(encoding='utf-8'))
+        self.lua.execute('''
+            history.samples={{hour=0,output=0}}
+            local b,g=makeBank(1,0)
+            local function battery(capacity,fraction)
+                return {
+                    getModData=function() return {ISA_maxCapacity=capacity} end,
+                    getCondition=function() return 100 end,
+                    getCurrentUsesFloat=function(self) return self.fraction end,
+                    setCurrentUsesFloat=function(self,value) self.fraction=value end,
+                    fraction=fraction
+                }
+            end
+            local first,second=battery(50,0.2),battery(150,0.8)
+            local items={first,second}
+            local container={
+                getItems=function() return {
+                    size=function() return #items end,
+                    get=function(self,index) return items[index+1] end
+                } end,
+                isItemAllowed=function() return true end,
+                setDrawDirty=function() end
+            }
+            function g:getContainer() return container end
+            b.calculateBatteryStats=BatteryMethods.calculateBatteryStats
+            b.updateBatteries=BatteryMethods.updateBatteries
+            -- Stale cached totals and old client deltas must have no effect.
+            b.charge=999; b.maxcapacity=999
+            b.ISA_pendingInventory={charge=999,capacity=999}
+            Native.update(g,0)
+            assert(b.batteries==2 and b.maxcapacity==200 and b.charge==130)
+            assert(first.fraction==0.65 and second.fraction==0.65)
+            assert(not b.ISA_pendingInventory)
+            local added=battery(100,0.9)
+            items[3]=added
+            now=1
+            Native.update(g,1)
+            assert(b.batteries==3 and b.maxcapacity==300 and b.charge==218)
+            assert(added.fraction==218/300 and first.fraction==added.fraction)
+            items={added}
+            Native.update(g,1)
+            assert(b.batteries==1 and b.maxcapacity==100)
+            assert(math.abs(b.charge-218/3)<0.000001)
+            assert(first.fraction==218/300)
+            items={}
+            Native.update(g,1)
+            assert(b.batteries==0 and b.maxcapacity==0 and b.charge==0)
         ''')
 
     def test_failed_job_restores_configuration_and_retries_without_spin(self):

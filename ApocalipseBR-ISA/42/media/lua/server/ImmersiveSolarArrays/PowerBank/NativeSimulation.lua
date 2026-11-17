@@ -151,6 +151,15 @@ function Native.update(generator,now,allowance,deadline,existingBank,source)
         generator:setSurroundingElectricity()
         bank._ISA_forceDevices=nil
     end
+    -- Sample the authoritative container once per simulation cycle. Preserve the
+    -- sample across bounded catch-up batches, including persisted checkpoints.
+    if generator and not bank.ISA_inventorySampled then
+        bank:calculateBatteryStats(generator:getContainer())
+        bank.ISA_inventorySampled=true
+        if bank.ISA_energyConfig then bank.ISA_energyConfig.maxcapacity=bank.maxcapacity end
+    end
+    -- Retired transfer commands must never contribute client inventory deltas.
+    bank.ISA_pendingInventory=nil
     local cached=bank.ISA_energyConfig
     if not cached then
         bank:updateDrain()
@@ -177,12 +186,6 @@ function Native.update(generator,now,allowance,deadline,existingBank,source)
     if processed==now then
         local finalizeStarted=getTimestampMs()
         Model.applyObservations(bank,now)
-        local inventory=bank.ISA_pendingInventory
-        if inventory then
-            bank.maxcapacity=math.max(0,bank.maxcapacity+inventory.capacity)
-            bank.charge=math.max(0,math.min(bank.maxcapacity,bank.charge+inventory.charge))
-            bank.ISA_pendingInventory=nil
-        end
         bank.charge=math.max(0,math.min(bank.maxcapacity,bank.charge))
         local controlGrid=cached.gridEligible==true
         if generator then controlGrid=localGrid end
@@ -210,6 +213,7 @@ function Native.update(generator,now,allowance,deadline,existingBank,source)
         local mainsCoversLoad=Grid.coversLoad(bank.drain,mains)
         Model.transition(bank,now,mainsCoversLoad
             or (b and b.ison and b.fuel>0 and b.condition>0) or (bank.on and bank.charge>0) or false)
+        bank.ISA_inventorySampled=nil
         bank:saveData(true)
         Native.metrics.broadcasts=Native.metrics.broadcasts+1
         Native.metrics.maxFinalizeMs=math.max(Native.metrics.maxFinalizeMs or 0,getTimestampMs()-finalizeStarted)
@@ -234,14 +238,6 @@ function Native.update(generator,now,allowance,deadline,existingBank,source)
     return processed,steps
 end
 
-function Native.inventoryDelta(bank,charge,capacity)
-    local delta=bank.ISA_pendingInventory or {charge=0,capacity=0}
-    bank.ISA_pendingInventory=delta
-    delta.charge=delta.charge+charge
-    delta.capacity=delta.capacity+capacity
-    enqueue(bank,bank:getIsoObject())
-    bank:saveData(false)
-end
 function Native.request(generator)
     local bank=systemBank(generator)
     if not bank then return end

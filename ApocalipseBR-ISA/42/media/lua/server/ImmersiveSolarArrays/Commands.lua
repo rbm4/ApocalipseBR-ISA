@@ -1,14 +1,5 @@
 local ISA = require "ImmersiveSolarArrays/Utilities"
 
-local function getPowerBankParentAt(x, y, z)
-    if not x or not y or not z then return nil end
-
-    local square = getSquare(x, y, z)
-    if not square then return nil end
-
-    return ISA.WorldUtil.findTypeOnSquare(square, "PowerBank")
-end
-
 Events.OnClientCommand.Add(function(module, command, player, args)
     if module ~= "ISA" then return end
 
@@ -39,13 +30,4 @@ Events.OnClientCommand.Add(function(module, command, player, args)
         end
     end
 
-    if command == "TransferAction" then
-        local item = args.transferItem
-        local srcParent = getPowerBankParentAt(args.srcX, args.srcY, args.srcZ)
-        local dstParent = getPowerBankParentAt(args.dstX, args.dstY, args.dstZ)
-
-        if ISA.PBSystem_Server then
-            ISA.PBSystem_Server:onTransferItem(item, srcParent, dstParent)
-        end
-    end
 end)
